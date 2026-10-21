@@ -402,6 +402,23 @@ const COURSE_MAP = {
   48: [[100,"叶绿体超微结构",1],[101,"原初反应"],[102,"电子传递与光合磷酸化"],[103,"固碳反应"]]
 };
 
+const IMMUNO_BASE = "https://www.bilibili.com/video/BV1Dq4y1C7WM/";
+const IMMUNO_TITLE = "医学免疫学";
+const IMMUNO_MAP = {
+  31: [[1,"免疫学概论：先天与适应性免疫",1],[13,"固有免疫系统及其介导的应答"]],
+  32: [[13,"固有免疫系统（谱系起点）",1],[9,"抗原提呈细胞与抗原提呈"],[6,"T 淋巴细胞（上）"],[5,"B 淋巴细胞"]],
+  34: [[15,"超敏反应（上）",1],[16,"超敏反应（下）",1]],
+  36: [[6,"HIV 前置：T 淋巴细胞（上）",1],[10,"HIV 前置：T 细胞介导的免疫应答"]],
+  T12: [[1,"免疫学概论：识别自我与非我",1],[4,"主要组织相容性复合体（MHC）",1],[9,"抗原提呈细胞与抗原提呈"],[10,"T 细胞介导的适应性免疫应答"],[13,"固有免疫系统及其介导的应答"]]
+};
+const IMMUNO_NOTES = {
+  31: "这两集用于补齐先天免疫与适应性免疫的分工；看完回到本页，画出两条防线怎样接力。",
+  32: "按“固有免疫 → 抗原提呈 → T/B 细胞”的顺序看，避免把细胞名字背成彼此孤立的清单。",
+  34: "先建立四型超敏反应的总框架，再回到本页比较效应分子、发生速度和典型疾病。",
+  36: "这门课没有独立的 HIV 分集，这里只补 CD4 T 细胞、MHC 限制性与适应性免疫应答这些前置原理。",
+  T12: "先用这些分集串起“固有免疫识别 → MHC 提呈 → T/B 细胞应答”，再回到本专题理解自我与非我的判定。"
+};
+
 const STORE_KEY = "cb811_v1";
 
 const PHASES = [
@@ -453,10 +470,14 @@ function flatText(blocks){
 }
 function daySearchText(d){
   const courseItems = COURSE_MAP[d.n] || [];
+  const immunoItems = IMMUNO_MAP[d.n] || [];
   const courseText = courseItems.length
     ? [COURSE_TITLE, "求臻羊气", "小咕学姐"].concat(courseItems.map(x => x[1] + " 第" + x[0] + "集")).join(" ")
     : "";
-  return [d.title].concat((d.sections || []).map(s => flatText(s.blocks)), courseText).join(" ");
+  const immunoText = immunoItems.length
+    ? [IMMUNO_TITLE, "忠保研道", "免疫学补充"].concat(immunoItems.map(x => x[1] + " 第" + x[0] + "集")).join(" ")
+    : "";
+  return [d.title].concat((d.sections || []).map(s => flatText(s.blocks)), courseText, immunoText).join(" ");
 }
 function dayLabel(d){
   return d.special ? d.title : "Day " + d.n + " · " + d.title;
@@ -838,10 +859,35 @@ function qaHtml(b){
 }
 
 function courseCardHtml(n, isTopic){
-  const items = isTopic ? null : COURSE_MAP[n];
-  if(!items || !items.length) return "";
+  const cards = [];
+  const cellItems = isTopic ? null : COURSE_MAP[n];
+  if(cellItems && cellItems.length){
+    cards.push(renderCourseCard({
+      base: COURSE_BASE,
+      kicker: "配套基础课 · 对应章节视频",
+      title: COURSE_TITLE,
+      meta: "求臻羊气、小咕学姐 · 点击分集直达对应知识点",
+      noteLabel: "怎么用",
+      note: "先看标有“主线”的分集，把原理听懂；其余分集放到第二轮补看。看完回到本页默写和做题，别把视频当背景音。"
+    }, cellItems));
+  }
+  const immunoItems = IMMUNO_MAP[n];
+  if(immunoItems && immunoItems.length){
+    cards.push(renderCourseCard({
+      base: IMMUNO_BASE,
+      kicker: "免疫学补充 · 对应分集",
+      title: IMMUNO_TITLE,
+      meta: "忠保研道 · 免疫学补充，按考纲选看，不必从头刷完",
+      noteLabel: "补充说明",
+      note: IMMUNO_NOTES[n] || "先看标有“主线”的分集，再用其余分集补齐免疫学框架。"
+    }, immunoItems));
+  }
+  return cards.join("");
+}
+
+function renderCourseCard(course, items){
   const links = items.map(([p,label,core]) => {
-    const href = COURSE_BASE + "?p=" + encodeURIComponent(p);
+    const href = course.base + "?p=" + encodeURIComponent(p);
     return `<a class="course-link${core ? " core" : ""}" href="${href}" target="_blank" rel="noopener noreferrer" title="第 ${p} 集 · ${esc(label)}">
       <span class="course-no">第 ${p} 集</span><span>${esc(label)}</span>${core ? '<span class="course-core">主线</span>' : ""}
     </a>`;
@@ -849,14 +895,14 @@ function courseCardHtml(n, isTopic){
   return `<div class="course-card">
     <div class="course-card-head">
       <div>
-        <div class="course-kicker">配套基础课 · 对应章节视频</div>
-        <div class="course-name">${esc(COURSE_TITLE)}</div>
-        <div class="course-meta">求臻羊气、小咕学姐 · 点击分集直达对应知识点</div>
+        <div class="course-kicker">${esc(course.kicker)}</div>
+        <div class="course-name">${esc(course.title)}</div>
+        <div class="course-meta">${esc(course.meta)}</div>
       </div>
-      <a class="course-all" href="${COURSE_BASE}" target="_blank" rel="noopener noreferrer">查看完整课程 ↗</a>
+      <a class="course-all" href="${course.base}" target="_blank" rel="noopener noreferrer">查看完整课程 ↗</a>
     </div>
     <div class="course-links">${links}</div>
-    <div class="course-note"><b>怎么用：</b>先看标有“主线”的分集，把原理听懂；其余分集放到第二轮补看。看完回到本页默写和做题，别把视频当背景音。</div>
+    <div class="course-note"><b>${esc(course.noteLabel)}：</b>${esc(course.note)}</div>
   </div>`;
 }
 
