@@ -201,6 +201,39 @@
   .mindmap-tile img{display:block; width:100%; height:190px; object-fit:contain; object-position:top center; background:#fff; border-radius:7px}
   .mindmap-tile b{font-size:12.5px; line-height:1.45}
   .mindmap-tile small{font-size:10.5px; color:var(--muted)}
+  .supp-brief{
+    padding:13px 14px; margin:4px 0 16px; border:1px solid var(--line); border-radius:12px;
+    background:linear-gradient(135deg,var(--accent),var(--panel2));
+  }
+  .supp-brief b{font-size:14px}
+  .supp-brief p{margin:5px 0 0; font-size:12.5px; color:var(--muted); line-height:1.7}
+  .resource-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:12px 0 4px}
+  .resource-card{
+    display:flex; flex-direction:column; gap:7px; padding:12px 13px; border:1px solid var(--line);
+    border-radius:12px; background:var(--panel2); color:var(--text); text-decoration:none; min-width:0;
+  }
+  .resource-card:hover{border-color:var(--brand); transform:translateY(-1px)}
+  .resource-top{display:flex; align-items:center; gap:7px; flex-wrap:wrap}
+  .resource-year{font-size:11px; font-weight:700; color:var(--brand)}
+  .resource-priority{font-size:10.5px; border:1px solid currentColor; color:var(--brand); border-radius:99px; padding:1px 6px}
+  .resource-title{font-size:13.5px; font-weight:650; line-height:1.45}
+  .resource-desc{font-size:12px; color:var(--muted); line-height:1.65; flex:1}
+  .resource-foot{font-size:11px; color:var(--brand)}
+  .supp-fold{border:1px solid var(--line); border-radius:13px; margin:20px 0 0; background:var(--panel); overflow:hidden}
+  .supp-fold>summary{
+    cursor:pointer; list-style:none; display:flex; align-items:center; gap:10px; padding:13px 14px;
+    background:linear-gradient(135deg,var(--accent),var(--panel2)); font-weight:650;
+  }
+  .supp-fold>summary::-webkit-details-marker{display:none}
+  .supp-fold>summary::marker{content:""}
+  .supp-fold>summary::after{content:"展开"; margin-left:auto; color:var(--brand); font-size:12px; font-weight:500}
+  .supp-fold[open]>summary::after{content:"收起"}
+  .supp-fold>summary small{font-size:11.5px; color:var(--muted); font-weight:400}
+  .supp-fold-body{padding:4px 14px 14px}
+  .supp-key{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin:12px 0 5px}
+  .supp-key>div{padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel2)}
+  .supp-key b{display:block; font-size:12.5px; margin-bottom:4px}
+  .supp-key span{font-size:11.5px; color:var(--muted); line-height:1.6}
   @media(max-width:720px){
     .topic-guide{align-items:flex-start; flex-direction:column}
     .topic-guide .btn{width:100%}
@@ -212,6 +245,9 @@
     .mindmap-feature img{max-height:440px}
     .mindmap-grid{grid-template-columns:1fr}
     .mindmap-tile img{height:170px}
+    .resource-grid,.supp-key{grid-template-columns:1fr}
+    .supp-fold>summary{align-items:flex-start; flex-wrap:wrap}
+    .supp-fold>summary::after{margin-left:0}
   }
   .flag{
     border:1px solid var(--line); background:var(--panel); color:var(--muted);
@@ -418,6 +454,7 @@
   <button class="btn" id="reviewBtn" data-act="review-only">回炉清单</button>
   <button class="btn" id="wrongBtn" data-act="wrong-only">错题本</button>
   <button class="btn" id="mindmapBtn" data-act="mindmap-index">章节思维导图</button>
+  <button class="btn" data-act="go-topic-n" data-t="T14" id="suppBtn">★★★★★ 超级重点</button>
   <button class="btn" data-act="go-topic" data-i="0" id="nobelBtn">2026 诺奖专题</button>
   <button class="btn" data-act="go-topic-n" data-t="T2" id="principleBtn">原理串联（12 个专题）</button>
   <label class="search"><input id="search" type="search" placeholder="搜索 Day / 知识点…"></label>
@@ -490,6 +527,11 @@ const MINDMAP_BASE = (
   MINDMAP_PAGE_PATH.includes("/cellbio-pages/") ||
   MINDMAP_PAGE_PATH.includes("/细胞生物学考研资料/")
 ) ? "./mindmaps/" : "./细胞生物学考研资料/mindmaps/";
+const SUPPLEMENT_BASE = (
+  /^https?:$/.test(location.protocol || "") ||
+  MINDMAP_PAGE_PATH.includes("/cellbio-pages/") ||
+  MINDMAP_PAGE_PATH.includes("/细胞生物学考研资料/")
+) ? "./supplements/" : "./细胞生物学考研资料/supplements/";
 const MINDMAP_TOPICS = [
   {n:1,title:"第1章 绪论",items:[
     ["t1-overview","绪论总框架","overview"],["t1-p1","细胞学与细胞生物学","point"],["t1-p2","细胞的同一性与多样性","point"]
@@ -568,7 +610,7 @@ const STORE_KEY = "cb811_v1";
 
 const PHASES = [
   ["主干精读", [1,2,3,4,6,7,8,9,10,13,14,15,16,17,18,20,21,22,24,25,27,28,29]],
-  ["811 新增", [30,31,32,34,36,37,38,39,41,42,43,44,45,48,49,50,51,52]],["时政专题",["T1"]],["原理串联",["T2","T3","T4","T5","T6","T7","T8","T9","T10","T11","T12","T13"]],
+  ["811 新增", [30,31,32,34,36,37,38,39,41,42,43,44,45,48,49,50,51,52]],["超级重点",["T14"]],["时政专题",["T1"]],["原理串联",["T2","T3","T4","T5","T6","T7","T8","T9","T10","T11","T12","T13"]],
   ["真题精练", [53,55,56,57,59,60,62,63]],
   ["冲刺模拟", [64,65,66,67,69,71,72,73,74,76,77,78,79,80]],
   ["机动复习", [11,23,35,46,58,70]],
@@ -592,6 +634,118 @@ let query = "";
 
 const days = DATA.days;
 const topics = DATA.topics || [];
+const SUPP_RESOURCE_BLOCKS = [
+  {kind:"resource",year:"2026",priority:"最新真题 · 先做",title:"南方科技大学 2026 年 811 真题（题目+答案）",desc:"最贴近今年命题语感：异染色质、DNA/RNA、跨膜运输、微管、过敏、JAK-STAT、类器官、核孔运输与 EGFR 耐药。",meta:"23 页 · 30 单选 + 6 简答 + 3 论述",file:"811-2026-real-exam.pdf"},
+  {kind:"resource",year:"2025",priority:"原卷二刷",title:"南方科技大学 2025 年 811 真题（含原图）",desc:"重点回看染色质、蛋白质结构决定功能、细胞膜、HIV 与免疫缺陷，并与 2023 过敏主线对照。",meta:"20 页 · 题目、答案与原图",file:"811-2025-real-exam.pdf"},
+  {kind:"resource",year:"2024",priority:"原卷二刷",title:"南方科技大学 2024 年 811 真题（题目+答案）",desc:"补核起源、低渗适应、主动运输、周期蛋白、人工细胞、镰状细胞贫血与信号可调性。",meta:"14 页 · 题目与答案",file:"811-2024-real-exam.pdf"},
+  {kind:"resource",year:"2023",priority:"原卷二刷",title:"南方科技大学 2023 年 811 真题（题目+答案）",desc:"看早期出题方式：膜脂、蛋白质分选、细胞骨架、过敏、凋亡、RTK 与发育中的细胞大小/数目。",meta:"19 页 · 题目与答案",file:"811-2023-real-exam.pdf"},
+  {kind:"resource",year:"新技术",priority:"论述提分区",title:"第 3 章先进技术预测题 · 结合南科大 2024—2026 成果",desc:"不是背仪器名，而是练“原理 → 样品制备 → 能回答什么问题 → 局限与展望”的完整技术链。",meta:"6 页 · 10 单选 + 4 简答 + 2 论述",file:"811-ch3-advanced-tech.pdf"},
+  {kind:"resource",year:"免疫",priority:"56 题专项",title:"MBoC 第 24 章先天免疫与适应性免疫 · 中英对照测试题",desc:"覆盖 PRR/PAMP、NK、树突状细胞、T/B 细胞、MHC、抗体、补体、免疫记忆与疫苗。",meta:"14 页 · 56 题 + 答案与解释",file:"811-mboc-ch24-immunology.pdf"}
+];
+
+const SUPP_2026_MCQS = [
+  {kind:"mcq",src:"2026 真题 · 第 1 题",stem:"关于异染色质，正确的是（ ）",opts:{A:"染色浅、转录活跃，多位于核中央",B:"组成型异染色质永久失活，不随细胞类型和发育阶段改变",C:"兼性异染色质主要分布于着丝粒和端粒区",D:"异染色质区的组蛋白一般不发生甲基化修饰"},ans:"B",explain:"组成型异染色质多见于着丝粒、端粒等区域，细胞类型改变后仍保持沉默；兼性异染色质可逆，典型例子是巴氏小体。异染色质常有 H3K9me3、HP1 与 DNA 高甲基化。"},
+  {kind:"mcq",src:"2026 真题 · 第 3 题",stem:"革兰氏阳性菌和阴性菌的关键区别是（ ）",opts:{A:"阳性菌肽聚糖层厚、含磷壁酸、无外膜；阴性菌肽聚糖层薄、有含脂多糖的外膜",B:"阳性菌肽聚糖层薄并含脂多糖；阴性菌肽聚糖层厚并含磷壁酸",C:"阳性菌无细胞壁；阴性菌有细胞壁",D:"阳性菌进行有丝分裂；阴性菌进行二分裂"},ans:"A",explain:"G⁺ 菌壁以厚肽聚糖和磷壁酸为特征；G⁻ 菌壁肽聚糖较薄，但外侧多一层含 LPS 的外膜。二者都以二分裂增殖，均非有丝分裂。"},
+  {kind:"mcq",src:"2026 真题 · 第 5 题",stem:"免疫检查点分子 PD-1（原卷写作 PI/PD）的主要作用是（ ）",opts:{A:"促进 T 细胞的活化与增殖",B:"抑制 T 细胞活化，属免疫检查点分子",C:"直接杀伤被病毒感染的靶细胞",D:"促进 B 细胞分化为浆细胞并分泌抗体"},ans:"B",explain:"PD-1 是抑制性受体；肿瘤细胞常利用 PD-L1–PD-1 轴削弱效应 T 细胞功能。PD-1/PD-L1 抑制剂的作用正是解除这道“刹车”，而不是直接杀伤肿瘤。"},
+  {kind:"mcq",src:"2026 真题 · 第 6 题",stem:"下列哪项对提高光学显微镜分辨能力最直接？（ ）",opts:{A:"提高照明亮度",B:"只增大物镜放大倍数",C:"缩小物镜数值孔径 NA",D:"改用波长更短的光源"},ans:"D",explain:"分辨率由 d = 0.61λ/NA 决定。提高 NA 或缩短波长可提高分辨率；单纯提高亮度或放大倍数只改变明暗和显示大小，不会创造更多可分辨细节。"},
+  {kind:"mcq",src:"2026 真题 · 第 8 题",stem:"什么能激活 G 蛋白？（ ）",opts:{A:"结合配体后被激活的 GPCR",B:"活化的受体酪氨酸激酶 RTK",C:"胞内第二信使 cAMP",D:"已经与 GTP 结合的 Gα 亚基"},ans:"A",explain:"配体激活 GPCR 后，GPCR 起 GEF 作用，促使 Gα 释放 GDP 并结合 GTP；GTP 结合态是活化结果，cAMP 位于 G 蛋白下游。"},
+  {kind:"mcq",src:"2026 真题 · 第 9 题",stem:"蓝色荧光蛋白与绿色荧光蛋白发生 FRET 时，加入 Ca²⁺ 使二者靠近，最可能观察到（ ）",opts:{A:"蓝色转红",B:"更偏蓝",C:"总体颜色加深",D:"蓝色变浅"},ans:"D",explain:"FRET 是从供体到受体的非辐射能量转移。供体蓝色荧光被猝灭而变弱，受体绿色荧光可增强；因此判据是供体变暗、受体变亮。"},
+  {kind:"mcq",src:"2026 真题 · 第 10 题",stem:"关于 cyclin（周期蛋白），正确的是（ ）",opts:{A:"参与泛素降解途径",B:"与 CDK 结合",C:"含量随细胞周期周期性合成与降解",D:"以上都是"},ans:"D",explain:"Cyclin 结合并决定 CDK 的底物与时期特异性，其浓度周期性变化；SCF、APC/C 等泛素连接酶通过降解 cyclin 推动周期单向前进。"},
+  {kind:"mcq",src:"2026 真题 · 第 11 题",stem:"DNA 损伤修复主要受哪些细胞周期检查点监控？（ ）",opts:{A:"G1 和 G2",B:"G2 和 M",C:"G1 和 S",D:"S 和 M"},ans:"A",explain:"G1/S 检查点阻止受损 DNA 进入复制，G2/M 检查点阻止受损或未完成复制的 DNA 进入分裂；S 期内部也有复制检查点，但题目最佳答案为 G1、G2。"},
+  {kind:"mcq",src:"2026 真题 · 第 12 题",stem:"下列哪种结构是高等真核细胞所特有的？（ ）",opts:{A:"质膜",B:"细胞壁",C:"染色体",D:"核糖体",E:"溶酶体"},ans:"E",explain:"质膜、染色体和核糖体原核细胞也有；溶酶体是真核内膜系统产生的酸性水解细胞器。高等植物细胞通常以液泡承担类似降解功能，但“溶酶体”是本题指定答案。"},
+  {kind:"mcq",src:"2026 真题 · 第 13 题",stem:"Ras 突变致癌主要通过什么途径？（ ）",opts:{A:"持续激活 RAF–MEK–ERK（MAPK）与 PI3K–Akt 等下游通路",B:"直接激活 CDK 并启动 DNA 复制",C:"直接抑制 p53 的转录激活功能",D:"直接激活端粒酶维持端粒长度"},ans:"A",explain:"Ras 是分子开关，突变后 GTP 酶活性下降、长期处于 Ras-GTP 状态，持续放大增殖与存活信号。它并非直接启动 CDK，也不等同于 p53 或端粒酶。"},
+  {kind:"mcq",src:"2026 真题 · 第 14 题",stem:"许多弱非共价键为何能让生物大分子牢固而特异地结合？（ ）",opts:{A:"接近后单个键能急剧增大",B:"同时形成共价键加固",C:"许多弱键以互补几何协同作用",D:"细胞主动降低内部温度"},ans:"C",explain:"单键弱、多键协同强。数量、距离和方向同时匹配，才能形成高亲和力与高特异性；这是酶–底物、抗原–抗体、DNA 双螺旋和蛋白折叠的共同基础。"},
+  {kind:"mcq",src:"2026 真题 · 第 15 题",stem:"产生抗体的杂交瘤细胞系如何实现“永生化”？（ ）",opts:{A:"异位表达端粒酶",B:"逆转录病毒转化",C:"细胞融合",D:"导入过量癌基因",E:"照射"},ans:"C",explain:"抗原免疫后的 B 细胞与骨髓瘤细胞融合：B 细胞提供特异性抗体基因，骨髓瘤提供无限增殖能力，再经 HAT 筛选和克隆化得到单克隆抗体工厂。"},
+  {kind:"mcq",src:"2026 真题 · 第 16 题",stem:"完整微管中侧向相邻原纤维之间主要是（ ）",opts:{A:"不同类型单体之间的共价作用",B:"相同类型单体之间的非共价作用",C:"相同类型单体之间的共价作用",D:"GTP 分子之间的非共价作用",E:"不同类型单体之间的非共价作用"},ans:"B",explain:"微管蛋白异二聚体首尾相接形成原纤维；相邻原纤维通过 α–α、β–β 这类同型亚基的非共价作用并排连接。非共价装配使微管能够动态解聚。"},
+  {kind:"mcq",src:"2026 真题 · 第 18 题",stem:"一个蛋白同时含 ER 信号序列、NLS、NES 与过氧化物酶体定位序列，最先决定去向的是（ ）",opts:{A:"细胞质基质",B:"细胞核",C:"核质穿梭",D:"过氧化物酶体",E:"内质网"},ans:"E",explain:"经典 ER 信号序列位于 N 端，新生肽链刚露出即被 SRP 识别，共翻译进入 ER。信号使用的先后层级比“把所有定位序列并列比较”更重要。"},
+  {kind:"mcq",src:"2026 真题 · 第 19 题",stem:"组蛋白尾部赖氨酸乙酰化具有哪一特征？（ ）",opts:{A:"增加正电荷并松开染色质",B:"招募 HP1 建立异染色质",C:"已甲基化赖氨酸通常先去甲基化后才能乙酰化",D:"仅此修饰就足以形成开放染色质",E:"共价修饰所以不可逆"},ans:"C",explain:"同一赖氨酸残基不能同时携带乙酰基和甲基，甲基化后需先由去甲基化酶移除。乙酰化中和正电荷、削弱组蛋白–DNA 作用，但染色质开放还受其他修饰与因子协同调控。"},
+  {kind:"mcq",src:"2026 真题 · 第 20 题",stem:"哪种离子在细胞内浓度通常高于细胞外？（ ）",opts:{A:"Na⁺",B:"Ca²⁺",C:"Mg²⁺",D:"K⁺",E:"Cl⁻"},ans:"D",explain:"Na⁺-K⁺ 泵每循环泵出 3 Na⁺、泵入 2 K⁺，维持胞内高 K⁺、低 Na⁺。胞质游离 Ca²⁺ 极低，是其能作为信号开关的前提。"},
+  {kind:"mcq",src:"2026 真题 · 第 21 题",stem:"下列哪种转运体不是电生性的？（ ）",opts:{A:"Na⁺-葡萄糖同向转运体",B:"Ca²⁺ 泵",C:"Na⁺-K⁺ 泵",D:"不依赖 Na⁺ 的 Cl⁻-HCO₃⁻ 交换体",E:"细菌视紫红质"},ans:"D",explain:"Cl⁻ 进、HCO₃⁻ 出，一进一出均为一份负电荷，净跨膜电流为零，属于电中性交换；其余过程会净转移电荷。"},
+  {kind:"mcq",src:"2026 真题 · 第 22 题",stem:"关于信号识别颗粒 SRP，正确的是（ ）",opts:{A:"是异二聚体蛋白",B:"通过结合延伸因子永久抑制翻译",C:"伴随新生肽链进入 ER 腔",D:"能够结合 GTP",E:"永久附着在 ER 膜胞质面"},ans:"D",explain:"SRP 是含 7S RNA 与多种蛋白的核糖核蛋白，结合 GTP 完成循环；它短暂停滞翻译并把核糖体带到 ER，自身不进入 ER 腔，完成定位后循环使用。"},
+  {kind:"mcq",src:"2026 真题 · 第 23 题",stem:"哪项描述更适合 v-SNARE 而不是 t-SNARE？（ ）",opts:{A:"通常位于靶膜",B:"通常由三种蛋白组成",C:"由单条多肽链组成",D:"只与囊泡膜上的同源 SNARE 结合"},ans:"C",explain:"v-SNARE 位于囊泡膜，常为单条肽链；t-SNARE 位于靶膜，常由 syntaxin 与 SNAP-25 等多个亚基组成。二者形成 trans-SNARE 四螺旋束，驱动膜融合。"},
+  {kind:"mcq",src:"2026 真题 · 第 24 题",stem:"下列哪项不是常见的第二信使？（ ）",opts:{A:"Ca²⁺",B:"cAMP",C:"DAG",D:"酪氨酸",E:"IP₃"},ans:"D",explain:"酪氨酸是蛋白质中的氨基酸残基；磷酸酪氨酸是停靠位点，但不是在小分子浓度层面扩散传递信号的第二信使。"},
+  {kind:"mcq",src:"2026 真题 · 第 25 题",stem:"Delta 如何激活相邻细胞核内特定基因表达？（ ）",opts:{A:"Notch 经 JAK-STAT 直接激活转录因子",B:"稳定与细胞骨架结合的转录因子",C:"释放 Notch 胞内段，入核把抑制因子变成激活因子",D:"把转录抑制因子拉到质膜后使其降解",E:"Notch 蛋白酶解后抑制其转录抑制作用"},ans:"C",explain:"Delta 结合 Notch 后，Notch 经 ADAM 与 γ-分泌酶两次切割，释放 NICD；NICD 入核结合 CSL，把共抑制复合体换成共激活复合体。"},
+  {kind:"mcq",src:"2026 真题 · 第 26 题",stem:"哪种细胞连接利用钙黏着蛋白锚定肌动蛋白骨架？（ ）",opts:{A:"紧密连接",B:"黏着连接",C:"桥粒",D:"半桥粒",E:"缝隙连接"},ans:"B",explain:"黏着连接由 cadherin–catenin 连接 actin；桥粒连接中间丝，半桥粒把中间丝连到基膜，紧密连接封闭细胞间隙，缝隙连接负责小分子通讯。"},
+  {kind:"mcq",src:"2026 真题 · 第 27 题",stem:"脊椎动物中 G1/S-Cdk 的主要 cyclin-Cdk 组合是（ ）",opts:{A:"Cyclin D；Cdk4/6",B:"Cyclin E；Cdk2",C:"Cyclin A；Cdk2/Cdk1",D:"Cyclin B；Cdk1",E:"Cyclin D；Cdk2"},ans:"B",explain:"Cyclin D–Cdk4/6 是 G1-Cdk，Cyclin E–Cdk2 是 G1/S-Cdk，Cyclin A–Cdk2 是 S-Cdk，Cyclin B–Cdk1 是 M-Cdk。名称反映逐步出现与底物切换。"},
+  {kind:"mcq",src:"2026 真题 · 第 28 题",stem:"下列哪组蛋白属于模式识别受体 PRR？（ ）",opts:{A:"Toll 样受体 TLR",B:"干扰素受体",C:"白细胞介素受体",D:"R 型凝集素受体",E:"视黄酸受体"},ans:"A",explain:"TLR 识别 LPS、鞭毛蛋白、单链 RNA、CpG DNA 等 PAMP。干扰素和白细胞介素受体是细胞因子受体，视黄酸受体是核受体。"},
+  {kind:"mcq",src:"2026 真题 · 第 29 题",stem:"胸腺中完全不能识别自身肽–MHC 的 TCR 会发生什么？（ ）",opts:{A:"阳性选择",B:"阴性选择",C:"受体编辑",D:"克隆抑制",E:"因忽视而死亡"},ans:"E",explain:"弱识别自身 MHC 获阳性选择存活；强识别自身肽–MHC 被阴性选择删除；完全不能识别者得不到存活信号，发生 death by neglect。"},
+  {kind:"mcq",src:"2026 真题 · 第 30 题",stem:"下列哪种属于执行者 caspase？（ ）",opts:{A:"Caspase-8",B:"Caspase-3",C:"Caspase-5",D:"Caspase-2",E:"Caspase-9"},ans:"B",explain:"Caspase-8、9 等属起始 caspase；Caspase-3、6、7 属执行者，负责切割核纤层、细胞骨架与 CAD 抑制物等底物，产生凋亡形态。"}
+];
+
+const SUPP_2026_QA = [
+  {kind:"qa",src:"2026 简答 1",q:"简述真核细胞微核（若题面实际指“细胞核”，应如何作答？）",a:"若题面确为“微核”：微核是有丝分裂后未进入子细胞核的无着丝粒染色体片段或滞后整条染色体，外包核膜，常见于辐射、致突变物或纺锤体损伤后；微核试验用于遗传毒理与辐射损伤检测。若题面漏字、实际问“细胞核”：从双层核被膜与 NPC、核纤层、核仁、染色质、核基质作答，并指出核膜可能由内质网特化而来；其核心意义是把转录、RNA 加工与翻译在时空上分开。"},
+  {kind:"qa",src:"2026 简答 2",q:"DNA 与 RNA 至少四点区别",a:"① 戊糖不同：DNA 为 2′-脱氧核糖，RNA 为核糖；② 碱基不同：DNA 含 T，RNA 含 U；③ 构象不同：DNA 通常为反向平行双螺旋，RNA 通常单链并形成茎环、假结等；④ 稳定性不同：DNA 缺 2′-OH 更稳定，RNA 的 2′-OH 使其易水解、周转快；⑤ 功能不同：DNA 主要储存遗传信息，RNA 兼具信息传递、适配、结构、催化与调控功能。"},
+  {kind:"qa",src:"2026 简答 3",q:"三种小分子跨膜运输方式及代表分子",a:"① 简单扩散：顺浓度梯度直接穿脂双层，如 O₂、CO₂、乙醇、甘油、疏水小分子；② 协助扩散：经通道或载体顺电化学梯度，不耗 ATP，如 GLUT 转运葡萄糖、水通道转运水、K⁺ 漏通道；③ 主动运输：逆电化学梯度并耗能，原发性如 Na⁺-K⁺ 泵、Ca²⁺ 泵，继发性如 Na⁺-葡萄糖同向转运。答题必须点明驱动力、是否需要膜蛋白、是否直接耗能。"},
+  {kind:"qa",src:"2026 简答 4",q:"微管的组成、特点与组装机制",a:"微管由 α/β-tubulin 异二聚体首尾相接成 13 条原纤维，围成外径约 25 nm 的中空管，具有极性：β-tubulin 暴露端为 + 端，α 端为 − 端。组装分核化、延伸、稳态三个阶段；γ-tubulin 环复合体在 MTOC 核化，异二聚体与 GTP 结合后加到 + 端，GTP 帽维持稳定，GTP 水解后易 catastrophe；MAPs、+TIPs 与药物调节动力学。微管参与形态维持、胞内运输、纺锤体和纤毛运动。"},
+  {kind:"qa",src:"2026 简答 5",q:"花粉过敏的细胞和分子机制",a:"链条为：上皮屏障缺陷/遗传易感 → 花粉抗原被树突状细胞处理 → Th2 极化，IL-4/IL-13 促进 B 细胞类别转换 → 花粉特异性 IgE 结合肥大细胞 FcεRI，完成致敏。再次接触时花粉多价表位交联 IgE–FcεRI，Ca²⁺ 升高，肥大细胞脱颗粒，释放组胺、白三烯、前列腺素等，导致血管扩张、通透性增加、平滑肌收缩和腺体分泌；数小时后嗜酸性粒细胞等募集形成迟发相。治疗可对应抗组胺、糖皮质激素、白三烯拮抗剂与脱敏治疗。"},
+  {kind:"qa",src:"2026 简答 6",q:"JAK-STAT 信号通路",a:"细胞因子受体本身常无激酶活性，胞内段结合 JAK。配体使受体聚集，JAK 反式自磷酸化并磷酸化受体酪氨酸位点；STAT 通过 SH2 结构域停靠并被 JAK 磷酸化，随后形成二聚体，经 NPC 入核结合 GAS/ISRE 等元件调控转录。通路由 SOCS、PIAS 和酪氨酸磷酸酶关闭；JAK2 V617F、STAT3 持续激活与骨髓增殖性肿瘤等有关，也是 JAK 抑制剂的靶点。"},
+  {kind:"qa",src:"2026 论述 1",q:"类器官：特征、意义、现状、趋势与药物筛选潜能",a:"定义：干细胞在三维微环境中自组织形成、具有来源器官部分结构和功能的微型模型。特征：自组织、多细胞组成与空间分层、部分生理功能、可保留患者遗传背景。意义：连接 2D 培养与动物模型，用于发育、疾病建模、感染、药物筛选、药敏与再生医学。现状：肠、肝、肾、肺、脑、视网膜等已建立，患者来源肿瘤类器官用于药敏，工程化类器官可控制突变顺序。局限：缺血管、免疫和神经，内部易缺氧，批次差异与标准化不足。趋势：血管化/免疫共培养、器官芯片多器官串联、单细胞时空组学、AI 与自动化质控、生物打印和监管认可。"},
+  {kind:"qa",src:"2026 论述 2",q:"用核孔通透性规则解释四条浓度差曲线",a:"判据：小于约 40 kD 的分子可经 NPC 水性通道自由扩散，最终两侧平衡、浓度差趋于零；超过阈值的大分子需 NLS/NES 与 importin/exportin、Ran-GTP 主动转运。按原图：A 水平不变＝不能被主动转运且不能自由通过的大蛋白；B 持续上升并穿入负值区＝被主动转入核的大蛋白；C 缓慢下降趋零＝小于 5 kD 的小蛋白；D 最快下降趋零＝水溶性小分子。字母不是关键，关键是分别用“不能通过、主动逆梯度、可扩散但较慢、扩散最快”解释。"},
+  {kind:"qa",src:"2026 论述 3",q:"EGFR 突变致癌、靶向治疗与耐药的原理链",a:"EGFR 是 RTK；配体或激活突变使受体二聚化、自磷酸化，启动 Ras–MAPK、PI3K–AKT 等通路，驱动增殖、抗凋亡、迁移与血管生成。治疗包括阻断胞外域的抗体和竞争 ATP 的 TKI。耐药来自靶点二次突变（T790M/C797S）、旁路激活（MET/HER2 等）、下游突变、表型转化与肿瘤异质性。联合策略必须先用组织或 ctDNA 找出耐药机制，再选 TKI＋MET 抑制剂、抗血管生成药、局部治疗或免疫治疗，并在类器官/PDX 与动态监测下验证。"}
+];
+
+const SUPP_TECH_MCQS = [
+  {kind:"mcq",src:"先进技术预测 · 第 1 题",stem:"cryo-ET 相比单颗粒分析最突出的优势是（ ）",opts:{A:"分辨率必然更高",B:"无需冷冻即可观察活细胞",C:"可在近天然细胞内获得原位三维超微结构",D:"只需光学显微镜"},ans:"C",explain:"SPA 用纯化颗粒追求高分辨；cryo-ET 保留细胞原位背景，回答“在哪里、与谁接触、处于什么状态”。分辨率不一定更高。"},
+  {kind:"mcq",src:"先进技术预测 · 第 2 题",stem:"Cryo-FIB 对高压冷冻组织减薄的主要目的是（ ）",opts:{A:"增强荧光信号",B:"得到电子可穿透的薄片",C:"去除样品中的水",D:"进行免疫标记"},ans:"B",explain:"厚组织超过电子穿透能力；冷冻 FIB 在保持玻璃化状态下去除多余材料，制成约 100–200 nm 的 lamella。"},
+  {kind:"mcq",src:"先进技术预测 · 第 3 题",stem:"高压冷冻的核心作用是（ ）",opts:{A:"形成大冰晶提高衬度",B:"毫秒级玻璃化，避免冰晶损伤",C:"提高抗体标记效率",D:"替代切片与染色"},ans:"B",explain:"玻璃态水没有晶核和冰晶膨胀，能保存近天然超微结构。关键不是“冻硬”，而是“以足够快速度避免结晶”。"},
+  {kind:"mcq",src:"先进技术预测 · 第 4 题",stem:"SMLM（PALM/STORM）突破衍射极限的核心原理是（ ）",opts:{A:"只提高 NA、缩短波长",B:"用结构光产生摩尔条纹",C:"用 STED 耗尽外围荧光",D:"时间上分离稀疏单分子并精确定位后叠加"},ans:"D",explain:"一次只让少量分子发光，避免点扩散函数重叠；拟合每个单分子中心，再跨帧重建。它靠“时间换空间”，不是单纯提高放大倍数。"},
+  {kind:"mcq",src:"先进技术预测 · 第 5 题",stem:"双光子显微镜适合深层活体成像的主要原因是（ ）",opts:{A:"紫外激发穿透强",B:"近红外散射小，非线性激发只发生在焦点",C:"分辨率天然高于 STED",D:"完全不需要荧光标记"},ans:"B",explain:"近红外光在组织中散射较小；只有焦点处光子密度足够高才发生双光子吸收，因此离焦漂白和光毒性较低。"},
+  {kind:"mcq",src:"先进技术预测 · 第 6 题",stem:"关于类器官，错误的是（ ）",opts:{A:"可由 ASC 或 iPSC 自组装",B:"具有部分组织结构与功能",C:"完全不需要细胞外基质或三维支架",D:"药物反应常比 2D 更接近体内"},ans:"C",explain:"类器官通常依赖 Matrigel、水凝胶等三维基质与形态发生素梯度；ECM 提供力学支撑并参与信号，不是可随意省略的容器。"},
+  {kind:"mcq",src:"先进技术预测 · 第 7 题",stem:"同时获得同一细胞转录组与染色质开放性信息，应采用（ ）",opts:{A:"bulk RNA-seq",B:"scRNA-seq 与 scATAC-seq 的单细胞多组学",C:"Western blot",D:"免疫共沉淀"},ans:"B",explain:"单细胞多组学把同一细胞的 RNA 表达与 ATAC 开放染色质信息配对，能解析调控关系与细胞异质性；bulk 方法丢失单细胞对应关系。"},
+  {kind:"mcq",src:"先进技术预测 · 第 8 题",stem:"研究 A/B compartment、TAD 与染色质环的主流技术是（ ）",opts:{A:"ChIP-seq",B:"Hi-C 及其衍生技术",C:"qPCR",D:"免疫电镜"},ans:"B",explain:"Hi-C 通过交联、酶切、连接与测序估计染色质空间邻近频率；ChIP-seq 主要看蛋白与 DNA 的结合，不是三维邻接图。"},
+  {kind:"mcq",src:"先进技术预测 · 第 9 题",stem:"微流控器官芯片相对静态类器官最独特的优势是（ ）",opts:{A:"成本必然更低",B:"可控制灌流、剪切力并串联多器官",C:"不需要细胞",D:"分辨率高于电镜"},ans:"B",explain:"器官芯片把机械力、浓度梯度与器官间代谢耦合纳入模型，可模拟吸收、分布、代谢、排泄；它不是单纯把人细胞放进小孔。"},
+  {kind:"mcq",src:"先进技术预测 · 第 10 题",stem:"工程化肠类器官按顺序引入 Kras/Apc/Trp53 突变，核心价值是（ ）",opts:{A:"可控指定突变顺序，解析顺序与表型的因果关系",B:"直接替代临床试验",C:"无需测序验证",D:"只适用于病毒学"},ans:"A",explain:"肿瘤不是“有哪几个突变”这么简单，还取决于突变先后及组织环境。工程化类器官能把此变量做成可重复实验。"}
+];
+
+const SUPP_IMMUNE_QA = [
+  {kind:"qa",src:"免疫专项 · 核心 1",q:"PRR、PAMP 与 NF-κB 的关系",a:"PRR 是先天免疫细胞的模式识别受体，例 TLR、RIG-I 样受体、NOD 样受体和 C 型凝集素受体；PAMP 是病原相关分子模式，如 LPS、鞭毛蛋白、单链 RNA、CpG DNA。PRR 识别 PAMP 后常活化 NF-κB，诱导 TNF、IL-1、IL-6 与 I 型干扰素等，把“检测到危险”转成炎症与抗原提呈程序。"},
+  {kind:"qa",src:"免疫专项 · 核心 2",q:"为什么树突状细胞是连接先天免疫与适应性免疫的桥梁？",a:"DC 用 PRR 感知病原后成熟，上调 MHC、共刺激分子与 CCR7，迁移到淋巴结；它把抗原加工后以 MHC I/II 呈递给 T 细胞，并提供共刺激，决定 T 细胞是否活化及向何种效应亚群分化。没有第二信号，单独 TCR 识别可导致耐受。"},
+  {kind:"qa",src:"免疫专项 · 核心 3",q:"胸腺阳性选择、阴性选择与“被忽视而死亡”的区别",a:"阳性选择奖励能弱识别自身 MHC 的 TCR，使其存活并获得 MHC 限制性；阴性选择删除强识别自身肽–MHC 的 T 细胞，建立中枢耐受；完全不能识别自身 MHC 的细胞得不到存活信号，发生 death by neglect。三者检验的是同一件事的不同强度区间。"},
+  {kind:"qa",src:"免疫专项 · 核心 4",q:"初次免疫应答与再次免疫应答的本质区别",a:"初次应答由 naive B/T 细胞启动，潜伏期长、IgM 为主、抗体滴度较低；再次应答由记忆细胞启动，潜伏期短、剂量阈值低、增殖更快，并以高亲和力 IgG 为主。克隆扩增、类别转换、体细胞高频突变与亲和成熟共同解释“越见越强”。"}
+];
+
+const SUPPLEMENT_TOPIC = {
+  n:"T14", special:true, title:"★★★★★ 超级重点补充资料 · 2023—2026 真题 + 新技术 + 免疫",
+  sections:[
+    {key:"frame", title:"怎么用这份超重点", blocks:[
+      {kind:"p",runs:[["不是新增第 81 天，而是在现有复习线上查最新缺口。",true]]},
+      {kind:"bullet",runs:[["第一遍只用 30 分钟：先做 2026 核心选择题，再打开原卷补两道图像题。",false]]},
+      {kind:"bullet",runs:[["第二遍回到原理：每道错题都要说出“结构基础 → 分子步骤 → 实验/疾病结果”，不要只背答案。",false]]},
+      {kind:"bullet",runs:[["每天另拿 20—30 分钟：先进技术、免疫 56 题二选一，不连续堆满。",false]]},
+      {kind:"bullet",runs:[["2023—2025 原卷用于二刷与对照，不要重新从头抄一遍。",false]]}
+    ]},
+    {key:"resources",title:"六份补充资料 · 打开原版 PDF",blocks:SUPP_RESOURCE_BLOCKS.concat([
+      {kind:"p",runs:[["2026 原卷是“回忆题 + MBoC 第 7 版官方题库补充题”的整合版；第 4、7 题带原图，本页不重复这两题。",false]]}
+    ])},
+    {key:"trend",title:"先看懂 2023—2026 的命题变化",blocks:[
+      {kind:"p",runs:[["南科大 811 的主线不是“某一道原题复现”，而是同一原理在不同情境中换壳。",true]]},
+      {kind:"bullet",runs:[["2023：膜脂、蛋白质分选、细胞骨架、过敏、凋亡、RTK、细胞大小与数目，偏“主干 + 开放实验设计”。",false]]},
+      {kind:"bullet",runs:[["2024：核起源、低渗适应、主动运输、周期蛋白、人工细胞、镰状细胞贫血、信号可调性，开始考“原理与进化/疾病连接”。",false]]},
+      {kind:"bullet",runs:[["2025：细胞共性、氨基酸、网格蛋白内吞、染色质、水平基因转移、抗体、蛋白质结构、细胞膜、HIV，偏“多模块串联”。",false]]},
+      {kind:"bullet",runs:[["2026：分子结构差异、运输能量学、细胞骨架、过敏与 JAK-STAT、类器官、NPC 定量读图、EGFR 耐药，明显加强“机制链 + 数据图 + 前沿技术”。",false]]},
+      {kind:"p",runs:[["共同底层：膜的分隔与运输、蛋白质定位与构象、信号开关与反馈、细胞骨架的力与极性、遗传信息的包装与传递、识别与疾病。",true]]}
+    ]},
+    {key:"fold",title:"2026 真题 · 核心选择题 26 题",note:"先做再展开；第 4、7 题回原卷看原图",open:false,blocks:[
+      {kind:"p",runs:[["建议限时 25 分钟。这里的 26 题去掉了两道必须看图的原卷题，以及两道译文存在歧义的题；完整 30 题仍在 2026 PDF。",false]]}
+    ].concat(SUPP_2026_MCQS)},
+    {key:"fold",title:"2026 真题 · 6 道简答 + 3 道论述",note:"先说逻辑链，再对照答案",open:false,blocks:SUPP_2026_QA},
+    {key:"fold",title:"第 3 章先进技术 · 10 题提分测",note:"技术原理、样品制备、应用与边界",open:false,blocks:[
+      {kind:"p",runs:[["2026 已经把第 3 章从“选择题中的仪器名”提升到论述题情境。答题顺序固定为：目的 → 样品制备 → 信号来源 → 能回答什么 → 局限。",true]]}
+    ].concat(SUPP_TECH_MCQS)},
+    {key:"fold",title:"免疫 56 题 · 先抓四条主线",note:"PRR → 抗原呈递 → 克隆选择 → 效应与记忆",open:false,blocks:[
+      {kind:"p",runs:[["原文件是 MBoC 第 24 章 56 题中英对照。不要一次刷完，先按下面四条主线各做 10—15 题。",true]]},
+      {kind:"num",runs:[["模式识别：PRR/PAMP → NF-κB/干扰素。",false]]},
+      {kind:"num",runs:[["抗原呈递与 T 细胞选择：MHC I 对 CD8，MHC II 对 CD4；阳选保留 MHC 限制性，阴选清除自身反应性。",false]]},
+      {kind:"num",runs:[["B 细胞与抗体：克隆扩增 → 类别转换 → 体细胞高频突变 → 高亲和力 IgG；IgM 最早，IgG 可过胎盘，IgA 守黏膜，IgE 参与过敏。",false]]},
+      {kind:"num",runs:[["效应与记忆：NK 识别缺失 MHC I，CTL 依赖 MHC I；再次应答更快更强，疫苗就是把危险信号与抗原一起呈现。",false]]}
+    ].concat(SUPP_IMMUNE_QA)},
+    {key:"closing",title:"这一页的最终检查",blocks:[
+      {kind:"p",runs:[["能否不看答案，用一句话串起：异染色质 → 核孔运输 → 染色质复制表达；跨膜运输 → 膜电位；GPCR/RTK → 核内转录；细胞骨架 → 胞内运输与连接；过敏 → 免疫效应；EGFR 突变 → 肿瘤与耐药？",true]]},
+      {kind:"p",runs:[["如果其中一条不能串起来，就点回对应的原理专题或章节思维导图；这份资料的价值是暴露断点，而不是增加背诵量。",false]]}
+    ]}
+  ]
+};
+topics.push(SUPPLEMENT_TOPIC);
 const appendix = DATA.appendix || [];
 
 const $side = document.getElementById("side");
@@ -608,6 +762,7 @@ function blockPlainText(b){
   if(b.kind === "mcq") return (b.stem || "") + " " + Object.keys(b.opts || {}).map(k => k + " " + b.opts[k]).join(" ");
   if(b.kind === "fib") return String(b.stem || "").replace(/\[\[\d+\]\]/g, "＿") + " " + (b.ans || []).map(v => v.join(" ")).join(" ");
   if(b.kind === "qa") return [b.q, b.a, b.src].filter(Boolean).join(" ");
+  if(b.kind === "resource") return [b.year, b.title, b.desc, b.meta].filter(Boolean).join(" ");
   return "";
 }
 function flatText(blocks){
@@ -991,6 +1146,15 @@ function richBlocksHtml(blocks){
     } else if(b.kind === "diagram"){
       out += diagramHtml(b);
       i++;
+    } else if(b.kind === "resource"){
+      const items = [];
+      while(i < blocks.length && blocks[i].kind === "resource"){ items.push(blocks[i]); i++; }
+      out += `<div class="resource-grid">` + items.map(x => `<a class="resource-card" href="${SUPPLEMENT_BASE + encodeURIComponent(x.file)}" target="_blank" rel="noopener noreferrer">
+        <div class="resource-top"><span class="resource-year">${esc(x.year || "PDF")}</span>${x.priority ? `<span class="resource-priority">${esc(x.priority)}</span>` : ""}</div>
+        <div class="resource-title">${esc(x.title)}</div>
+        <div class="resource-desc">${esc(x.desc || "")}</div>
+        <div class="resource-foot">${esc(x.meta || "打开 PDF")} ↗</div>
+      </a>`).join("") + `</div>`;
     } else {
       out += `<p style="margin:7px 0">${runsHtml(b.runs)}</p>`;
       i++;
@@ -1112,6 +1276,12 @@ function renderMindMapIndex(){
 function sectionHtml(s, si, n, answerHtml, isTopic){
   const k = s.key;
   const title = s.title;
+  if(k === "fold"){
+    return `<details class="supp-fold"${s.open ? " open" : ""}>
+      <summary><span>${esc(title)}</span>${s.note ? `<small>${esc(s.note)}</small>` : ""}</summary>
+      <div class="supp-fold-body">${richBlocksHtml(s.blocks || [])}</div>
+    </details>`;
+  }
   if(k === "quiz"){
     const items = s.blocks.map((b, bi) => {
       const id = key("quiz", n, si, bi);
