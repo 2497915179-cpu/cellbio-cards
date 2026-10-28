@@ -120,6 +120,33 @@
   .topic-guide .guide-text{display:flex; flex-direction:column; gap:2px; flex:1; min-width:0}
   .topic-guide b{font-size:14px}
   .topic-guide span{font-size:13px; opacity:.9; line-height:1.55}
+  .focus-card{
+    margin:0 0 16px; padding:15px 16px 14px; border:1px solid var(--line);
+    border-left:5px solid var(--warn); border-radius:13px;
+    background:linear-gradient(135deg,var(--warn-bg),var(--panel) 62%);
+  }
+  .focus-card.rest{
+    border-left-color:var(--ok);
+    background:linear-gradient(135deg,var(--ok-bg),var(--panel) 62%);
+  }
+  .focus-head{display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap}
+  .focus-kicker{font-size:11px; color:var(--muted); font-weight:650; letter-spacing:.45px}
+  .focus-rating{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:2px}
+  .focus-stars{font-size:18px; line-height:1; letter-spacing:2px; color:var(--warn)}
+  .focus-tier{font-size:11.5px; color:var(--warn); border:1px solid currentColor; border-radius:99px; padding:1px 7px}
+  .focus-book{
+    max-width:390px; padding:5px 9px; border:1px solid var(--line); border-radius:8px;
+    background:var(--panel); color:var(--muted); font-size:11.5px; line-height:1.45;
+  }
+  .focus-book b{color:var(--text); font-weight:650}
+  .focus-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:11px}
+  .focus-item{padding:9px 10px; border:1px solid var(--line); border-radius:9px; background:var(--panel); min-width:0}
+  .focus-item.wide{grid-column:1/-1}
+  .focus-item .label{display:block; font-size:10.5px; color:var(--muted); margin-bottom:2px; letter-spacing:.25px}
+  .focus-item .value{display:block; font-size:13px; line-height:1.65; overflow-wrap:anywhere}
+  .focus-item .value.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12px}
+  .focus-rule{font-size:11px; color:var(--muted); line-height:1.55; margin-top:9px}
+  .focus-rest-body{font-size:13.5px; line-height:1.8; margin-top:8px}
   .course-card{
     margin-top:14px; padding:13px 14px; border:1px solid var(--line); border-radius:12px;
     background:var(--panel2);
@@ -235,6 +262,10 @@
   .supp-key b{display:block; font-size:12.5px; margin-bottom:4px}
   .supp-key span{font-size:11.5px; color:var(--muted); line-height:1.6}
   @media(max-width:720px){
+    .focus-card{padding:13px 13px 12px}
+    .focus-book{max-width:none; width:100%}
+    .focus-grid{grid-template-columns:1fr}
+    .focus-item.wide{grid-column:auto}
     .topic-guide{align-items:flex-start; flex-direction:column}
     .topic-guide .btn{width:100%}
     .course-card-head{flex-direction:column; gap:5px}
@@ -295,7 +326,7 @@
     .main{padding:14px 14px 80px}
   }
 .mcq{border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin:12px 0; background:var(--panel)}
-  .mcq-head{display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:12px; color:var(--muted)}
+  .mcq-head{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; font-size:12px; color:var(--muted)}
   .mcq-num{min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:var(--panel2); color:var(--text);
     display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:600}
   .mcq-stem{font-size:15px; font-weight:600; line-height:1.7; margin:4px 0 10px}
@@ -311,7 +342,7 @@
   .opt.correct{background:var(--ok-bg); border-color:var(--ok); color:var(--ok); font-weight:600}
   .opt.wrong{background:var(--danger-bg); border-color:var(--danger); color:var(--danger); font-weight:600}
   .opt.dim{opacity:.55}
-  .mcq-rec{margin-left:auto; font-size:12px; padding:2px 8px; border-radius:999px; white-space:nowrap}
+  .mcq-rec{margin-left:auto; max-width:100%; font-size:12px; padding:2px 8px; border-radius:999px; white-space:normal; overflow-wrap:anywhere}
   .mcq-rec.ok{background:var(--ok-bg); color:var(--ok)}
   .mcq-rec.no{background:var(--danger-bg); color:var(--danger)}
   .stat-line{display:flex; gap:8px; font-size:12.5px; color:var(--muted); margin:0 2px 12px; flex-wrap:wrap}
@@ -748,6 +779,719 @@ const SUPPLEMENT_TOPIC = {
 topics.push(SUPPLEMENT_TOPIC);
 const appendix = DATA.appendix || [];
 
+function focusSpec(stars, evidence, core, chain, book, terms, defer, output){
+  return { stars, evidence, core, chain, book, terms, defer, output };
+}
+
+const REST_FOCUS = {
+  rest: true,
+  core: "主动休息，让记忆完成 Consolidation。",
+  output: "不安排新题；若有余力，闭眼复述昨天的一条机制链即可。"
+};
+
+// 权重由 2023—2026 年 811 真题重复度、教材主干位置与机制链价值共同决定。
+// MBoC 7e 第 24 章已按用户提供的 56 题中英对照材料逐题核对；其余章节按 7e 章目提供英文机制框架与术语边界。
+const FOCUS_BY_DAY = {
+  1: focusSpec(4,
+    "2025 直接考细胞共同特征；后续真题常把细胞统一性、结构差异和分类判断放进情境题。",
+    "细胞学说三点 + 细胞的共同特征；明确“病毒不是细胞”这一边界。",
+    "细胞学说提出同一性 → 原核/真核分化 → 结构、代谢、遗传与增殖仍然统一。",
+    "MBoC 7e · Ch. 1 Cells and Genomes",
+    "cell theory · cell · genome · prokaryote · eukaryote · model organism",
+    "科学家生平、显微镜发明年份等低收益细节。",
+    "不看资料写细胞学说三点，再用 60 秒解释“为什么病毒不是细胞”。"),
+  2: focusSpec(5,
+    "2025 考细胞共性；2026 考革兰氏菌细胞壁差异，说明“分类 + 结构差异”是主线。",
+    "原核与真核的关键差异、革兰氏阳性/阴性菌壁结构、病毒与细胞的边界。",
+    "共同分子基础 → 膜与遗传装置差异 → 原核/真核/病毒分类 → 药物或感染情境判断。",
+    "MBoC 7e · Ch. 1 Cells and Genomes",
+    "bacterial cell wall · Gram-positive · Gram-negative · archaeon · virus · host cell",
+    "病毒分类史、各种极端环境微生物的细枝末节。",
+    "画一张三层对照表：真核、原核、病毒；每层只写 4 个判据。"),
+  3: focusSpec(5,
+    "2026 直接考显微分辨率；选择题也反复用“哪种方法能回答什么问题”。",
+    "分辨率、光学与电镜边界、荧光定位、差速/密度梯度离心的分层逻辑。",
+    "生物学问题 → 需要空间/时间/分子信息 → 选择成像或分离方法 → 解释结果与局限。",
+    "MBoC 7e · Ch. 8 Analyzing Cells, Molecules, and Systems; Ch. 9 Visualizing Cells and Their Molecules",
+    "resolution · diffraction limit · fluorescence microscopy · confocal · electron microscopy · centrifugation",
+    "镜片结构、仪器操作步骤和厂商参数。",
+    "给出“定位蛋白、观察活细胞、测分子互作、分离细胞器”四个任务，各选一种方法并说理由。"),
+  4: focusSpec(4,
+    "先进技术已进入 2026 论述；考法从“仪器名”转向“能解决什么问题、有什么局限”。",
+    "细胞培养、免疫荧光、FISH、流式、单细胞、基因编辑与现代成像的总用途。",
+    "研究目的 → 样品状态 → 信号来源 → 定量方式 → 结论边界。",
+    "MBoC 7e · Ch. 8 Analyzing Cells, Molecules, and Systems; Ch. 9 Visualizing Cells and Their Molecules",
+    "immunofluorescence · FISH · flow cytometry · single-cell sequencing · CRISPR-Cas9",
+    "具体试剂配方、显微操作旋钮和单篇论文细节。",
+    "用“目的—技术—读出—局限”四格，选三种技术各写一行。"),
+  5: REST_FOCUS,
+  6: focusSpec(5,
+    "2023 考膜脂；2024 考低渗适应；2025 考膜结构功能；2026 又考 K⁺ 梯度与电生性转运，属于连续高频。",
+    "膜脂/膜蛋白、流动镶嵌模型、不对称性、流动性和选择透过性，并能用红细胞低渗说明。",
+    "两亲性脂质 → 双分子层 → 蛋白与糖链形成不对称 → 流动性/选择透过性 → 运输、信号与连接。",
+    "MBoC 7e · Ch. 10 Membrane Structure",
+    "lipid bilayer · amphipathic · membrane protein · fluidity · asymmetry · selective permeability",
+    "膜脂所有亚类的结构式、历史模型之间的人物争论。",
+    "画膜剖面并标出脂质、整合/外周蛋白、糖链和两侧差异；再解释低渗为何先影响膜完整性。"),
+  7: focusSpec(5,
+    "2024 考主动运输分类；2026 考 K⁺ 梯度、电生性转运与离子通道，属于必拿主干。",
+    "被动运输、主动运输、Na⁺/K⁺ ATPase、协同运输、离子通道与膜电位。",
+    "浓度/电化学梯度 → 通道或载体 → ATP 或离子梯度供能 → 梯度和膜电位改变 → 细胞功能。",
+    "MBoC 7e · Ch. 11 Membrane Transport of Small Molecules and the Electrical Properties of Membranes",
+    "electrochemical gradient · facilitated diffusion · active transport · Na⁺/K⁺ pump · symport · antiport",
+    "所有泵家族的亚型与组织分布；先把能量来源讲清。",
+    "闭卷画出 Na⁺/K⁺ 泵一个循环，并解释它怎样同时建立 Na⁺ 与 K⁺ 梯度。"),
+  8: focusSpec(4,
+    "2025 考网格蛋白介导内吞；2026 用跨膜运输情境反复考查“方向与囊泡身份”。",
+    "受体介导内吞、网格蛋白衣被、内体分选、吞噬与胞吐的区别。",
+    "配体 → 受体聚集 → 网格蛋白衣被小泡 → 脱衣被 → 内体 → 回收或溶酶体降解。",
+    "MBoC 7e · Ch. 13 Intracellular Membrane Traffic",
+    "receptor-mediated endocytosis · clathrin-coated pit · endosome · phagocytosis · exocytosis",
+    "不同细胞类型吞噬受体的全部清单。",
+    "从 LDL 或转铁蛋白任选一例，写出完整内吞—分选—去向链。"),
+  9: focusSpec(4,
+    "2026 考溶酶体；真题常把内膜系统、标志酶与蛋白质运输连在一起。",
+    "ER、Golgi、溶酶体、过氧化物酶体的功能与标志酶，以及内膜系统的分工。",
+    "ER 合成/初加工 → Golgi 加工分选 → 溶酶体降解或分泌；过氧化物酶体独立完成氧化解毒。",
+    "MBoC 7e · Ch. 12 Intracellular Compartments and Protein Sorting; Ch. 13 Intracellular Membrane Traffic",
+    "endoplasmic reticulum · Golgi apparatus · lysosome · peroxisome · acid hydrolase · marker enzyme",
+    "所有溶酶体贮积症的酶名与疾病名。",
+    "用一句话定位 ER、Golgi、溶酶体、过氧化物酶体，并各写一个标志功能。"),
+  10: focusSpec(5,
+    "2023 考蛋白质分选；2026 考分选信号优先顺序、SRP、v-SNARE，论述权重很高。",
+    "信号肽/导肽、共翻译与后翻译转运、COPI/COPII/网格蛋白、Rab、tether、SNARE。",
+    "分选信号 → 受体/衣被 → 运输小泡 → Rab 与 tether 定位 → v-/t-SNARE 配对 → 融合。",
+    "MBoC 7e · Ch. 12 Intracellular Compartments and Protein Sorting; Ch. 13 Intracellular Membrane Traffic",
+    "sorting signal · signal peptide · SRP · COPI · COPII · Rab · SNARE",
+    "全部衣被蛋白亚基与膜泡运输实验史。",
+    "画两条链：细胞核/线粒体输入，以及 ER→Golgi→溶酶体，标出每一步信号和衣被。"),
+  11: focusSpec(5,
+    "前 10 天的真题高频集中在细胞统一性、膜、运输、内膜系统与分选；错题反映的就是优先补漏。",
+    "回炉 1—10 天错题；优先膜脂、跨膜运输、网格蛋白内吞、蛋白质分选。",
+    "把错题还原成一条机制链，再写出错在哪个节点，而不是只记正确选项。",
+    "MBoC 7e · Ch. 10—13",
+    "membrane · transport · endocytosis · sorting · membrane traffic",
+    "没有错因的新拓展内容。",
+    "从错题本抽 12 题限时 15 分钟；每题用一句话写出正确链条。"),
+  12: REST_FOCUS,
+  13: focusSpec(3,
+    "历年 811 对线粒体的细节考查少于膜运输和分选，但化学渗透是解释 ATP 生成的核心框架。",
+    "电子传递链、质子动力势、ATP 合酶、氧化磷酸化，以及线粒体/叶绿体结构对应关系。",
+    "NADH/FADH₂ → 电子传递 → H⁺ 泵出 → 质子动力势 → ATP 合酶 → ATP。",
+    "MBoC 7e · Ch. 14 Energy Conversion: Mitochondria and Chloroplasts",
+    "electron-transport chain · proton-motive force · chemiosmotic coupling · ATP synthase · oxidative phosphorylation",
+    "复合体每个亚基的化学计量、全部辅酶结构式。",
+    "只用一张图解释“电子走、质子积、ATP 生”，并指出抑制剂可卡在哪一步。"),
+  14: focusSpec(3,
+    "2024 核起源可与内膜系统/内共生证据交叉；线绿体半自主性通常作为简答题框架出现。",
+    "线粒体/叶绿体半自主性、内共生起源证据，以及与核基因组的分工。",
+    "自身环状 DNA + 70S 核糖体 → 只合成少数蛋白 → 多数蛋白核编码并后翻译输入 → 半自主性。",
+    "MBoC 7e · Ch. 14 Energy Conversion: Mitochondria and Chloroplasts",
+    "semiautonomous organelle · endosymbiotic theory · chloroplast DNA · mitochondrial DNA · protein import",
+    "内共生学说的人物年份和所有假说分支。",
+    "写“四个证据 + 一个反证/边界”，说明为什么线粒体不是完全自主的细胞。"),
+  15: focusSpec(5,
+    "2023 考广义细胞骨架；2026 考微管，说明组成、极性与功能必须能区分。",
+    "微丝、微管、中间纤维的组成、极性、聚合动力学与功能；肌动蛋白和微管蛋白。",
+    "亚基 → 成核 → 极性聚合物 → 动态组装/解聚 → 马达蛋白或结构支撑 → 定向功能。",
+    "MBoC 7e · Ch. 16 The Cytoskeleton",
+    "actin filament · microtubule · tubulin · polarity · dynamic instability · motor protein",
+    "所有药物名称与不同细胞类型中的全部同工型。",
+    "画三列对照：微丝、微管、中间纤维；每列只写组成、极性、动态性、一个功能。"),
+  16: focusSpec(5,
+    "2023 把细胞骨架作为综合题；2026 考微管与纤毛结构，适合从“聚合物 → 马达 → 运动”贯通。",
+    "中间纤维、马达蛋白、纤毛/鞭毛轴丝、细胞皮层与胞质分裂。",
+    "微管双联体 → 动力蛋白滑动 → 相邻双联体位移 → 轴丝弯曲 → 纤毛摆动。",
+    "MBoC 7e · Ch. 16 The Cytoskeleton",
+    "intermediate filament · kinesin · dynein · myosin · axoneme · basal body",
+    "全部中间纤维蛋白的基因名与角蛋白分型。",
+    "闭卷画 9+2 轴丝，再标出驱动蛋白/动力蛋白的方向与货物。"),
+  17: focusSpec(5,
+    "2026 考异染色质、组蛋白乙酰化与核孔定量图；2024、2025 也反复考染色质与核结构。",
+    "核小体—30 nm 纤维—染色质环—染色体层级；常/异染色质；组蛋白修饰；核孔运输。",
+    "DNA → 核小体 → 染色质压缩 → 异染色质/常染色质 → 核孔选择性运输 → 基因表达。",
+    "MBoC 7e · Ch. 4 DNA, Chromosomes, and Genomes; Ch. 7 Control of Gene Expression",
+    "nucleosome · heterochromatin · euchromatin · histone acetylation · nuclear pore complex · nuclear localization signal",
+    "所有组蛋白变体与非编码 RNA 家族细节。",
+    "画染色质压缩四级图，并用“乙酰化 → 电荷/染色质松弛 → 转录”解释组蛋白乙酰化。"),
+  18: focusSpec(4,
+    "核糖体是教材主干；真题常通过蛋白质合成、SRP 与 rRNA 催化功能跨章考查。",
+    "核糖体组成、A/P/E 位点、起始—延伸—终止、rRNA 的催化作用与多聚核糖体。",
+    "mRNA + 起始 tRNA → 小亚基定位 → 大亚基组装 → 肽键形成/移位循环 → 终止释放。",
+    "MBoC 7e · Ch. 6 How Cells Read the Genome: From DNA to Protein",
+    "ribosome · rRNA · peptidyl transferase · initiation · elongation · termination · polysome",
+    "全部抗生素作用位点与 rRNA 加工酶。",
+    "画一个核糖体循环，并回答“为什么说核糖体是核酶”。"),
+  19: REST_FOCUS,
+  20: focusSpec(5,
+    "2026 考 G 蛋白与第二信使；2024、2025 反复考信号可调性与通路方向。",
+    "GPCR → 异三聚体 G 蛋白 → AC/cAMP/PKA 与 PLC/IP₃/DAG/Ca²⁺/PKC；信号关闭机制。",
+    "配体 → GPCR 构象变化 → Gα 交换 GDP/GTP → 效应酶 → 第二信使 → 激酶 → 细胞反应 → 水解/去磷酸化关闭。",
+    "MBoC 7e · Ch. 15 Cell Signaling",
+    "GPCR · heterotrimeric G protein · second messenger · adenylyl cyclase · PKA · PLC · IP₃ · DAG · PKC",
+    "所有 Gα 亚型与受体亚型清单。",
+    "画两条分叉：Gs→AC→cAMP→PKA；Gq→PLC→IP₃/DAG；在图上标出关闭点。"),
+  21: focusSpec(5,
+    "2023 考 RTK；2026 连续考 Ras、EGFR、G 蛋白；2024 考信号可调性，属于全科最高频之一。",
+    "RTK 二聚化/自磷酸化、Ras–Raf–MEK–ERK、PI3K–Akt、JAK–STAT；级联放大与负反馈。",
+    "配体 → RTK 二聚化/自磷酸化 → Grb2/SOS → Ras-GTP → Raf → MEK → ERK → 转录；并行 PI3K→Akt。",
+    "MBoC 7e · Ch. 15 Cell Signaling",
+    "receptor tyrosine kinase · autophosphorylation · Ras · MAPK cascade · PI3K · Akt · feedback",
+    "所有接头蛋白和磷酸酶亚型的细节。",
+    "不看书画 RTK–Ras–MAPK 全链，并写出两个关闭/负反馈节点。"),
+  22: focusSpec(5,
+    "2024 考周期蛋白；2026 考 G1/S cyclin、DNA 损伤检查点与有丝分裂，属于必拿主干。",
+    "周期与检查点、cyclin–CDK、Rb–E2F、MPF、APC/C、有丝分裂和减数分裂差异。",
+    "生长信号/DNA 状态 → cyclin–CDK 活性 → Rb 磷酸化或 MPF 激活 → 进入 S/M → APC/C 降解 cyclin → 退出。",
+    "MBoC 7e · Ch. 17 The Cell Cycle",
+    "cyclin · CDK · checkpoint · Rb · E2F · MPF · APC/C · mitosis · meiosis",
+    "所有 CDK 亚型的底物清单。",
+    "画 G1→S→G2→M 四个检查点，并各写一个“停/走”分子。"),
+  23: focusSpec(5,
+    "名词解释高频集中在膜、运输、分选、信号、周期与死亡；先背可迁移的定义结构。",
+    "20 个高频名词，用“定义 + 关键分子 + 功能/考试对比”作答。",
+    "名词 → 位置/组成 → 机制动作 → 生理结果 → 与近义概念的边界。",
+    "MBoC 7e · Ch. 10—18 术语表",
+    "fluid mosaic · electrochemical gradient · signal peptide · second messenger · checkpoint · apoptosis",
+    "只背一句口号、不写机制动作。",
+    "限时 20 分钟默写 20 个名词；每个不超过 3 句，但必须含机制动词。"),
+  24: focusSpec(5,
+    "2026 把 cyclin、检查点、Ras 与肿瘤连成情境题；2023、2024 也考增殖调控与癌基因。",
+    "癌基因/抑癌基因、p53–p21–CDK、Ras–MAPK、Rb–E2F、增殖失控的判定。",
+    "DNA 损伤 → ATM/ATR → p53 → p21 → CDK 抑制 → 周期停滞/修复/凋亡；Ras 激活则持续促增殖。",
+    "MBoC 7e · Ch. 17 The Cell Cycle; Ch. 20 Cancer",
+    "oncogene · tumor suppressor · p53 · Rb · CDK inhibitor · driver mutation",
+    "肿瘤分期、病理分型和所有癌基因列表。",
+    "用一条检查点链解释“为什么 p53 失活会让 DNA 损伤细胞继续分裂”。"),
+  25: focusSpec(4,
+    "2026 考类器官，2024/2026 反复涉及干细胞与细胞命运；重点不是背名词，而是分化逻辑。",
+    "全能/多能/单能、iPS、干细胞龛、分化与选择性基因表达。",
+    "干细胞 → 信号/转录因子 → 染色质状态 → 命运限制 → 分化细胞；组织更新由干细胞龛维持。",
+    "MBoC 7e · Ch. 21 Development of Multicellular Organisms; Ch. 22 Stem Cells and Tissue Renewal",
+    "pluripotency · induced pluripotent stem cell · stem-cell niche · lineage commitment · differentiation",
+    "山中因子发现史与所有重编程效率数据。",
+    "画“全能→多能→单能→分化”的潜能漏斗，并标出 iPS 的重编程位置。"),
+  26: REST_FOCUS,
+  27: focusSpec(5,
+    "2023 考凋亡；2026 考执行型 caspase；2008 等旧题亦反复考凋亡与坏死区别。",
+    "内源/外源凋亡、caspase 级联、Bcl-2 家族、凋亡小体、坏死和衰老的边界。",
+    "内源：损伤 → p53 → Bax/Bak → 细胞色素 c → Apaf-1 → caspase-9 → caspase-3；外源：FasL → Fas → caspase-8 → caspase-3。",
+    "MBoC 7e · Ch. 18 Cell Death",
+    "apoptosis · necrosis · caspase · cytochrome c · Bcl-2 family · apoptosome · senescence",
+    "所有 caspase 编号与全部凋亡刺激清单。",
+    "画两条凋亡通路到 caspase-3 汇合，再用 2 句比较凋亡与坏死。"),
+  28: focusSpec(5,
+    "2026 考黏着连接；2023、2025 反复用连接/骨架/组织屏障做综合题。",
+    "紧密连接、黏着连接、桥粒、半桥粒、间隙连接的结构—蛋白—功能对应。",
+    "钙黏蛋白 → 连环蛋白 → 肌动蛋白：形成黏着连接；claudin/occludin → 紧密连接屏障；connexin → 间隙连接通道。",
+    "MBoC 7e · Ch. 19 Cell Junctions and the Extracellular Matrix",
+    "tight junction · adherens junction · desmosome · gap junction · cadherin · catenin · connexin",
+    "所有连接蛋白亚型与组织分布。",
+    "画一张上皮细胞，标出五种连接，并用箭头写它们分别连接什么。"),
+  29: focusSpec(3,
+    "细胞外基质在 811 中多作为细胞连接、迁移或组织构建题的配角，先掌握功能框架。",
+    "胶原、纤连蛋白、层粘连蛋白、蛋白聚糖、整合素与基底膜。",
+    "ECM 配体 → 整合素 → 黏着斑 → 肌动蛋白骨架 → 细胞迁移/存活/分化信号。",
+    "MBoC 7e · Ch. 19 Cell Junctions and the Extracellular Matrix",
+    "extracellular matrix · collagen · fibronectin · laminin · integrin · focal adhesion · basement membrane",
+    "所有胶原分型与糖胺聚糖结构式。",
+    "用“ECM—整合素—细胞骨架—信号”四步解释细胞如何感知硬度。"),
+  30: focusSpec(3,
+    "细胞类型通常作为免疫、干细胞、肿瘤与神经情境题的背景；先会按谱系和结构功能分类。",
+    "四类基本组织、干细胞、生殖细胞、肿瘤细胞、免疫细胞、神经元与胶质细胞。",
+    "干细胞/祖细胞 → 谱系限制 → 特殊结构与功能；用“结构决定功能”比较主要细胞类型。",
+    "MBoC 7e · Ch. 21 Development of Multicellular Organisms; Ch. 22 Stem Cells and Tissue Renewal",
+    "epithelial cell · connective tissue · neuron · glia · germ cell · stem cell · lineage",
+    "把所有细胞类型逐一背成无关联清单。",
+    "做一个六行表：细胞类型、来源、标志结构、核心功能、与真题的常见情境。"),
+  31: focusSpec(5,
+    "2026 考 PRR/PAMP、天然免疫识别；2023 过敏与 2025 抗体题都依赖两条防线框架。",
+    "先天/适应性免疫比较、PRR/PAMP、TLR→NF-κB、I 型干扰素、补体与 DC 桥接。",
+    "PAMP → PRR → NF-κB/干扰素 → 炎症/抗病毒；DC 捕获抗原 → 外周淋巴器官 → 启动适应性免疫。",
+    "MBoC 7e · Ch. 24 The Innate and Adaptive Immune Systems",
+    "innate immunity · adaptive immunity · PRR · PAMP · TLR · NF-κB · type I interferon · dendritic cell",
+    "全部 Toll 样受体编号和补体每个片段的细节。",
+    "画两条防线接力图，标出先天免疫如何“启动”而不是“替代”适应性免疫。"),
+  32: focusSpec(5,
+    "2026 考胸腺选择、MHC 与 PRR；2025 考抗体、免疫细胞；谱系题必须以功能定位。",
+    "MHC I/II、APC、T/B 细胞发育、阳选/阴选、AIRE、NK 的缺失自我识别、淋巴结分区。",
+    "HSC → T 细胞入胸腺 → 阳选获得 MHC 限制 → 阴选删除强自身反应 → 外周淋巴器官遇抗原 → 克隆扩增/效应/记忆。",
+    "MBoC 7e · Ch. 24 The Innate and Adaptive Immune Systems",
+    "MHC class I · MHC class II · positive selection · negative selection · AIRE · NK cell · KIR · paracortex",
+    "所有细胞因子名称和完整造血谱系树。",
+    "闭卷画 MHC I/CD8 与 MHC II/CD4 两条抗原呈递链，再标出阳选和阴选的区别。"),
+  33: REST_FOCUS,
+  34: focusSpec(4,
+    "2023 考过敏；超敏四型是把抗体、补体、T 细胞和肥大细胞串起来的典型综合题。",
+    "四型超敏反应的效应分子、时间、组织损伤机制和代表病。",
+    "I：IgE–FcεRI–肥大细胞脱颗粒；II：IgG/M 攻击细胞表面；III：免疫复合物沉积；IV：Th1/CTL 迟发。",
+    "MBoC 7e · Ch. 24 The Innate and Adaptive Immune Systems",
+    "hypersensitivity · IgE · FcεRI · mast cell · immune complex · delayed-type hypersensitivity",
+    "把所有过敏原和疾病名称逐一背诵。",
+    "用四行表写四型的“抗体/细胞—效应—时间—例子”，再做 2023 过敏题。"),
+  35: focusSpec(5,
+    "跨年反复出现的不是孤立名词，而是可画出的通路：RTK、GPCR、离子泵、分选、凋亡。",
+    "把五条机制链压缩到一张 A4：钠钾泵、GPCR、RTK、蛋白质分选、凋亡。",
+    "每条都按“起点 → 关键节点 → 放大/执行 → 关闭或终点”画箭头，不写大段解释。",
+    "MBoC 7e · Ch. 11, 13, 15, 18",
+    "pump · GPCR · RTK · sorting · apoptosis",
+    "未理解的细枝末节；先让箭头方向全部正确。",
+    "限时 12 分钟画五条链；画完后遮住文字，只看箭头复述。"),
+  36: focusSpec(4,
+    "2025 直接考 HIV；2024 以艾滋病机会性感染考免疫缺陷，机制链必须完整。",
+    "HIV 入侵、逆转录、整合、CD4⁺ T 细胞耗竭与免疫缺陷之间的因果链。",
+    "gp120–CD4/CCR5或CXCR4 → gp41 融合 → 逆转录 → 整合 → 复制出芽 → CD4⁺T 下降 → 细胞免疫崩溃。",
+    "MBoC 7e · Ch. 23 Pathogens and Infection; Ch. 24 The Innate and Adaptive Immune Systems",
+    "HIV · CD4 · CCR5 · CXCR4 · reverse transcriptase · integrase · opportunistic infection",
+    "全部抗逆转录病毒药物与临床试验数据。",
+    "画“开门—开双锁—融合—写档案—复制—免疫崩溃”六步图。"),
+  37: focusSpec(5,
+    "肿瘤基础已从 2023、2024 的名词题扩展到 2026 的分子情境题；抓基因—表型对应。",
+    "癌基因、抑癌基因、p53/Rb、Ras/EGFR、肿瘤标志性表型与 Warburg 效应。",
+    "驱动突变 → 增殖/存活/基因组不稳定 → 接触抑制丧失、侵袭转移、代谢重编程。",
+    "MBoC 7e · Ch. 20 Cancer",
+    "oncogene · tumor suppressor · driver mutation · genomic instability · Warburg effect · metastasis",
+    "肿瘤分型、分期和所有癌基因的疾病谱。",
+    "用 6 个 hallmark 解释“为什么肿瘤不是单一基因病”。"),
+  38: focusSpec(5,
+    "2026 直接考 EGFR 突变与耐药；2023/2026 的信号题最终都落到靶向治疗逻辑。",
+    "EGFR 驱动、TKI 机制、二次突变/旁路激活/下游突变引起的耐药。",
+    "EGFR 突变 → RTK 持续激活 → Ras–MAPK/PI3K–Akt → 增殖；TKI 抑制 → 二次突变或旁路 → 耐药。",
+    "MBoC 7e · Ch. 15 Cell Signaling; Ch. 20 Cancer",
+    "EGFR · tyrosine kinase inhibitor · secondary mutation · bypass pathway · synthetic lethality",
+    "具体药物剂量、所有临床试验方案。",
+    "以 EGFR 为例画“靶点—通路—药物—耐药”四格图，再写一个克服策略。"),
+  39: focusSpec(5,
+    "2026 考类器官；2024/2026 干细胞相关题要求把 iPS、谱系和 3D 自组织连起来。",
+    "干细胞潜能、iPS、类器官、3D 培养、组织更新与模型局限。",
+    "干细胞 + 合适基质/信号 → 自组织 → 空间极性/谱系分化 → 微型组织结构 → 功能读出。",
+    "MBoC 7e · Ch. 22 Stem Cells and Tissue Renewal",
+    "organoid · 3D culture · self-organization · pluripotency · extracellular matrix · tissue regeneration",
+    "类器官培养配方与所有器官类型。",
+    "写 2D 与类器官的三点差异，并说明类器官为何仍不是完整个体。"),
+  40: REST_FOCUS,
+  41: focusSpec(5,
+    "2026 考显微分辨率、FRET 与先进技术；题目重视“技术能测什么”而非仪器操作。",
+    "荧光/共聚焦/超分辨、FRAP、FRET、双光子、cryo-ET 与 Cryo-FIB 的用途和边界。",
+    "样品制备 → 对比度来源 → 分辨率/时间尺度 → 定量读出 → 可回答的生物学问题。",
+    "MBoC 7e · Ch. 8 Analyzing Cells, Molecules, and Systems; Ch. 9 Visualizing Cells and Their Molecules",
+    "super-resolution · SMLM · FRET · FRAP · two-photon · cryo-ET · Cryo-FIB",
+    "荧光基团化学结构与所有商业显微镜型号。",
+    "给 FRET、FRAP、超分辨、cryo-ET 各写一个“能回答/不能回答”的问题。"),
+  42: focusSpec(5,
+    "2026 以类器官和 3D 培养考论述；答题要把技术、模型与局限同时写。",
+    "类器官、器官芯片、单细胞多组学、Hi-C、3D 培养与疾病建模。",
+    "细胞来源 → 3D 基质/微环境 → 自组织或微流控 → 多组学/成像读出 → 疾病模型或药物筛选 → 局限。",
+    "MBoC 7e · Ch. 8 Analyzing Cells, Molecules, and Systems; Ch. 22 Stem Cells and Tissue Renewal",
+    "organoid · organ-on-a-chip · single-cell multi-omics · Hi-C · 3D culture",
+    "每种模型的详细培养参数和商业平台。",
+    "用“优势—局限—应用”三栏写类器官和器官芯片，各限制在 3 句。"),
+  43: focusSpec(2,
+    "发育不是 811 的连续高频主线，通常作为干细胞、分化或细胞行为的背景出现。",
+    "三胚层、原肠作用、形态发生、诱导与形态发生素浓度梯度。",
+    "受精/卵裂 → 囊胚 → 原肠胚 → 三胚层 → 诱导信号与形态发生素梯度 → 器官发生。",
+    "MBoC 7e · Ch. 21 Development of Multicellular Organisms",
+    "gastrulation · ectoderm · mesoderm · endoderm · morphogen · induction",
+    "胚胎学历史分类和每种动物的详细发育时序。",
+    "画三胚层图，并给每一层写两个衍生物；不展开到器官细节。"),
+  44: focusSpec(2,
+    "细胞命运决定与 Delta–Notch 在 2026 出现，但其余发育细节仍属于低权重枝叶。",
+    "细胞命运、潜能限制、干细胞龛、模式生物与 Delta–Notch 横向抑制。",
+    "信号梯度/邻近信号 → 受体激活 → 转录因子网络 → 染色质状态 → 命运选择。",
+    "MBoC 7e · Ch. 21 Development of Multicellular Organisms; Ch. 22 Stem Cells and Tissue Renewal",
+    "cell fate · competence · Delta–Notch · morphogen gradient · model organism · lineage",
+    "四种模式生物的全部遗传学实验史。",
+    "用 Delta–Notch 写一个“相邻细胞为何走向不同命运”的三步解释。"),
+  45: focusSpec(5,
+    "2026 连续考 G 蛋白、Ras、第二信使与信号可调性；流程图是本章最好的复习单位。",
+    "RTK–Ras–MAPK、JAK–STAT、GPCR–PLC–IP₃/DAG 的信号方向、交叉和关闭。",
+    "配体 → 受体 → 小 G 蛋白/激酶/第二信使 → 级联放大 → 转录或代谢 → 负反馈关闭。",
+    "MBoC 7e · Ch. 15 Cell Signaling",
+    "MAPK cascade · JAK–STAT · PIP₂ · IP₃ · DAG · crosstalk · negative feedback",
+    "所有受体亚型的药理学激动剂/拮抗剂。",
+    "脱离资料画三条通路；每条只允许写 8 个节点，最后各写两个关闭点。"),
+  46: focusSpec(5,
+    "本日只做主线压缩，优先把历年反复出现的“膜—运输—分选—信号—周期—死亡—免疫”串起来。",
+    "六条跨章主线：膜系统、能量、蛋白质分选、信号、周期、免疫。",
+    "每一章只保留“起点 → 关键中间体 → 终点功能”，其余内容作为支路处理。",
+    "MBoC 7e · Parts II–V 核心章节",
+    "membrane system · energy conversion · protein sorting · signaling · cell cycle · immunity",
+    "没有进入主线的边缘名词。",
+    "用一张纸画六条主线，每条不超过 6 个节点；第二天只看图复述。"),
+  47: REST_FOCUS,
+  48: focusSpec(3,
+    "光合作用常以名词解释、比较题和能量转换综合题出现，低于膜运输与分选的直接权重。",
+    "类囊体/基质分区、光反应、质子动力势、ATP/NADPH、Calvin 循环。",
+    "光子 → PSII 光解水 → 电子传递/质子泵出 → PSI → NADPH + ATP → Calvin 固定 CO₂。",
+    "MBoC 7e · Ch. 14 Energy Conversion: Mitochondria and Chloroplasts",
+    "photosystem · photolysis · proton-motive force · NADPH · Calvin cycle · Rubisco",
+    "光谱学细节与所有色素分子结构。",
+    "比较线粒体氧化磷酸化与叶绿体光合磷酸化：相同点 3 个、不同点 4 个。"),
+  49: focusSpec(4,
+    "2025、2026 都从氨基酸、蛋白质结构、弱相互作用和实验技术切回分子层面。",
+    "氨基酸性质、肽键、弱相互作用、折叠、结构域、酶活性中心、分子伴侣与 RNAi。",
+    "一级序列 → 弱相互作用驱动折叠 → 结构域/活性中心 → 功能 → 突变或实验干预改变表型。",
+    "MBoC 7e · Ch. 2 Cell Chemistry and Bioenergetics; Ch. 3 Proteins",
+    "amino acid · peptide bond · noncovalent interaction · protein domain · active site · chaperone",
+    "所有氨基酸侧链的精确 pKa 与非高频缩写。",
+    "任选一个蛋白，按“序列—折叠—结构域—功能—突变”写一条 5 步链。"),
+  50: focusSpec(4,
+    "2026 考 DNA 损伤检查点、组蛋白乙酰化与核孔定量；把基因表达、修复和染色质连起来。",
+    "DNA 复制/损伤修复/检查点、染色质修饰、转录调控、CRISPR 与表观遗传。",
+    "DNA 损伤 → 传感器/检查点 → 修复或凋亡；染色质修饰 → 可及性 → 转录程序改变。",
+    "MBoC 7e · Ch. 5 DNA Replication, Repair, and Recombination; Ch. 7 Control of Gene Expression",
+    "DNA damage checkpoint · repair · chromatin remodeling · histone modification · transcription",
+    "每一种修复通路的全部酶名与遗传病名称。",
+    "画“DNA 损伤—检查点—修复/凋亡”三分支，并说明 p53 在何处决策。"),
+  51: focusSpec(5,
+    "选择题专项覆盖荧光/FRAP、DNA 含量、水通道、运输与骨架；核心是识别情境中的分子方向。",
+    "把题干中的“顺/逆梯度、能量来源、极性、时间尺度”先圈出来再判断。",
+    "题干条件 → 找运输/结构/周期节点 → 排除方向错误 → 用一句话验证。",
+    "MBoC 7e · Ch. 11, 15, 16, 17",
+    "fluidity · water channel · active transport · cytoskeleton · cell-cycle DNA content",
+    "不会做的题不要靠选项记忆；回到机制链找断点。",
+    "20 题限时 25 分钟；错题必须写“错在方向、定义还是实验判读”。"),
+  52: focusSpec(5,
+    "细胞骨架、原癌基因/抑癌基因与运输比较是选择题稳定得分区，优先追求零方向错误。",
+    "三种骨架的极性和稳定性、Ras/p53、被动/主动运输和细胞器标志。",
+    "选项关键词 → 对照极性与能量 → 对照基因功能 → 排除过度绝对化表述。",
+    "MBoC 7e · Ch. 11, 16, 20",
+    "microtubule polarity · Ras · p53 · passive transport · tumor suppressor",
+    "难题怪题；先把高频基础题做稳。",
+    "整理一张“最容易混”的 12 组对照，并各组造一道反向判断题。"),
+  53: focusSpec(5,
+    "22—23 年名词解释偏向教材核心概念；回答要定义准确且能落到机制或功能。",
+    "索套 RNA、光合作用、RNAi、分子伴侣、转染、表观遗传等高频名词。",
+    "定义 → 发生位置/关键分子 → 一步机制 → 功能或考试对比。",
+    "MBoC 7e · Ch. 3, 6, 7, 14",
+    "lariat RNA · RNAi · molecular chaperone · transfection · epigenetics · photosynthesis",
+    "只写一句话定义而不写功能。",
+    "任选 8 个名词，每个限 45 秒口述：定义、机制、用途。"),
+  54: REST_FOCUS,
+  55: focusSpec(5,
+    "22—23 简答把免疫、RTK、核仁、胆固醇和线虫凋亡串成跨章题；答案要有结构。",
+    "六道简答的“定义—机制—功能/证据”模板；先答主干，再补例子。",
+    "题干要求 → 3—5 个得分节点 → 关键分子/实验证据 → 一句结论。",
+    "MBoC 7e · Ch. 3, 6, 15, 24",
+    "RTK · nucleolus · cholesterol · apoptosis · allergy · HMG-CoA reductase",
+    "把一个点写成大段背景，挤掉机制得分点。",
+    "每题用 90 秒写 5 行答案，再用不同颜色圈出得分节点。"),
+  56: focusSpec(5,
+    "2024 单选前半覆盖化学键、基因组、荧光、主动运输、分选与 Ras，都是可重复的主干。",
+    "先判断分子/结构的层级，再判断方向与能量，最后核对实验读数。",
+    "分子结构 → 运输/信号方向 → 实验技术读出 → 选出与证据一致的结论。",
+    "MBoC 7e · Ch. 2, 8, 11, 12, 15",
+    "phosphodiester bond · genome size · fluorescence · active transport · COPII · Ras",
+    "不熟的低频例外；把错题归到具体章节。",
+    "限时做前半套；每道错题在题号后写一个二级标题，不抄解析。"),
+  57: focusSpec(5,
+    "2024 单选后半覆盖凋亡、癌基因/抑癌基因、干细胞、细胞骨架与病毒，适合用对照表稳分。",
+    "caspase 汇合、Ras/p53、iPS 与骨架功能；先看主语是细胞、蛋白还是病毒。",
+    "主语分类 → 机制链节点 → 现象/表型 → 排除“绝对化”和“颠倒因果”。",
+    "MBoC 7e · Ch. 16, 18, 20, 22",
+    "caspase · oncogene · tumor suppressor · iPSC · cytoskeleton · virus",
+    "低收益的实验条件细枝末节。",
+    "只复盘错题，制作 6 张双面卡：概念正面、反例反面。"),
+  58: focusSpec(5,
+    "限时输出比重复阅读更接近真实考试；优先选择跨年重复的膜、信号、周期、免疫题。",
+    "30 分钟完成 3 道简答 + 1 道论述框架，答案必须出现机制动词。",
+    "审题 → 列得分点 → 写主干 → 补例子 → 用一句话回答题干。",
+    "MBoC 7e · Ch. 10—18, 24",
+    "mechanism · evidence · phenotype · regulation · conclusion",
+    "开卷摘抄和无限补充。",
+    "严格计时；写完后只检查“有没有答到题干要求的动词”。"),
+  59: focusSpec(5,
+    "2024 简答覆盖核膜起源、渗透调节、膜功能、主动运输、cyclin 与 HIV，属于典型跨章命中。",
+    "每个简答写 4—6 个节点；先保证定义和方向正确，再补例子。",
+    "现象/结构 → 机制 → 功能结果 → 与题目情境相连。",
+    "MBoC 7e · Ch. 11, 12, 17, 23, 24",
+    "nuclear envelope · osmotic balance · active transport · cyclin · HIV · CD4",
+    "把简答写成没有层次的散文。",
+    "任选 2024 简答 3 题，限时 18 分钟；核对是否每段都有得分节点。"),
+  60: focusSpec(5,
+    "2024 论述要求把人工细胞、镰状细胞贫血和信号可调性写成“原理 + 例子 + 评价”。",
+    "论述模板：概念界定 → 机制链 → 例子/证据 → 局限或调控 → 结论。",
+    "题干问题 → 机制总框架 → 一个正向例子 → 一个反向/边界 → 回到题干。",
+    "MBoC 7e · Ch. 3, 8, 11, 15",
+    "artificial cell · hemoglobin · sickle-cell disease · signal regulation · feedback",
+    "堆背景知识、写不出题目要求的因果。",
+    "选 1 道论述写 8 分钟提纲，不写全文；检查四段是否都在回答同一问题。"),
+  61: REST_FOCUS,
+  62: focusSpec(5,
+    "2025 选择题与解答题命中细胞共性、氨基酸、网格蛋白内吞、染色质、基因转移、抗体结构与膜功能。",
+    "先用 2025 原题定位遗漏，再回到对应日的机制链；不要只背答案。",
+    "题干关键词 → 对应章节 → 机制方向 → 选出/写出结论。",
+    "MBoC 7e · Ch. 1, 3, 4, 10, 13, 24",
+    "cell commonality · amino acid · clathrin · chromatin · horizontal gene transfer · antibody",
+    "纯记忆型边角题；优先修复反复出现的概念错误。",
+    "限时做 2025 选择；每题写“章节 + 一个关键词”，错题回到原页。"),
+  63: focusSpec(5,
+    "2025 大题把蛋白质结构功能、膜结构与 HIV 连成论述；要能跨章节组织证据。",
+    "蛋白质结构—功能、膜结构—运输—信号、HIV—CD4—免疫缺陷三条大链。",
+    "结构决定功能 → 运输/信号维持稳态 → 病原体破坏关键节点 → 疾病表型。",
+    "MBoC 7e · Ch. 3, 10, 11, 23, 24",
+    "protein structure · membrane function · HIV · CD4 · immune deficiency",
+    "在答案里堆 unrelated 的名词。",
+    "选 2025 一道大题写 25 分钟，最后用 3 分钟做“扣题检查”。"),
+  64: focusSpec(5,
+    "冲刺膜系统与运输：2023—2026 的高频节点几乎每年都会以不同题型复现。",
+    "膜的组成与特征、被动/主动运输、Na⁺/K⁺ 泵、离子通道、内吞与溶酶体。",
+    "膜结构 → 梯度 → 转运体/泵 → 膜电位与稳态 → 细胞功能。",
+    "MBoC 7e · Ch. 10, 11, 13",
+    "membrane · electrochemical gradient · pump · channel · endocytosis",
+    "膜系统的所有历史模型与边缘药物。",
+    "20 分钟画“膜—运输—内吞—降解”总图，再用 10 分钟做 10 道选择。"),
+  65: focusSpec(3,
+    "线粒体/叶绿体是教材主干，但近年 811 直接分值低于膜运输与信号；用比较题保本即可。",
+    "化学渗透、氧化磷酸化、光合磷酸化、半自主性与内共生。",
+    "电子传递 → 质子梯度 → ATP 合酶；光合作用再加光解水和 NADPH。",
+    "MBoC 7e · Ch. 14 Energy Conversion: Mitochondria and Chloroplasts",
+    "chemiosmosis · proton gradient · ATP synthase · photosynthesis · endosymbiosis",
+    "复合体亚基化学计量与光谱细节。",
+    "用一张双栏图比较线粒体和叶绿体，各写 4 个相同点/不同点。"),
+  66: focusSpec(5,
+    "蛋白质分选与膜泡运输是 2023、2026 连续命中的高频论述点，必须能画完整顺序。",
+    "信号肽/导肽、SRP、COPI/II、网格蛋白、Rab、SNARE、溶酶体与分泌途径。",
+    "分选信号 → 衣被出芽 → 运输 → tether/Rab → SNARE → 融合 → 目的地。",
+    "MBoC 7e · Ch. 12 Intracellular Compartments and Protein Sorting; Ch. 13 Intracellular Membrane Traffic",
+    "sorting signal · SRP · COPI · COPII · Rab · SNARE · autophagy",
+    "所有辅助蛋白和膜泡运输实验细节。",
+    "限时画 3 条路径：核输入、ER→Golgi、Golgi→溶酶体，并标出信号/衣被。"),
+  67: focusSpec(5,
+    "细胞核与染色质在 2024、2025、2026 反复出现，异染色质、核孔、组蛋白修饰是稳定高频。",
+    "核被膜周期、核孔运输、核仁、核小体、常/异染色质、组蛋白修饰与染色体。",
+    "DNA→核小体→染色质→染色体；核孔选择性运输；核仁组装核糖体亚基。",
+    "MBoC 7e · Ch. 4, 7",
+    "nuclear envelope · nuclear pore · nucleolus · nucleosome · heterochromatin · histone modification",
+    "所有核体名称和核纤层蛋白疾病。",
+    "用一张图串起核膜、核孔、核仁、染色质四个结构，再各写一个功能。"),
+  68: REST_FOCUS,
+  69: focusSpec(5,
+    "信号与肿瘤是 2026 的连续情境链：G 蛋白/Ras→周期/检查点→EGFR/耐药。",
+    "GPCR、RTK、Ras–MAPK、PI3K–Akt、p53/Rb、EGFR 靶向与耐药。",
+    "配体 → 受体 → 小 G 蛋白/激酶 → 周期或转录 → 增殖失控 → 靶向与耐药。",
+    "MBoC 7e · Ch. 15, 17, 20",
+    "GPCR · RTK · Ras · MAPK · p53 · EGFR · drug resistance",
+    "所有药物名称和临床试验数据。",
+    "画“信号—周期—肿瘤—药物”连续图，标出 3 个可用药节点。"),
+  70: focusSpec(5,
+    "整卷回顾的目标不是再做新题，而是把错题归入少数高频机制和可重复的答题模板。",
+    "按章节统计失分，按“概念、方向、结构、实验、表述”分类。",
+    "错题 → 章节 → 机制节点 → 正确答案 → 下一次如何识别。",
+    "MBoC 7e · 全部核心章节",
+    "error pattern · mechanism · evidence · answer structure",
+    "重新刷已掌握且重复度低的题。",
+    "做一张失分雷达图：膜运输、分选、信号、周期、肿瘤、免疫六类各列 3 个漏洞。"),
+  71: focusSpec(5,
+    "2024/2026 的 cyclin、检查点、caspase 与有丝分裂题高度集中，冲刺要把四条链合成一张图。",
+    "周期 cyclin/CDK、检查点、有丝分裂、内源/外源凋亡、衰老与坏死区别。",
+    "周期信号 → 检查点决策 → 有丝分裂 → 损伤/异常 → 凋亡或衰老。",
+    "MBoC 7e · Ch. 17 The Cell Cycle; Ch. 18 Cell Death",
+    "cyclin · CDK · checkpoint · mitosis · caspase · apoptosis",
+    "所有细胞周期蛋白亚型的功能清单。",
+    "闭卷画“周期—检查点—凋亡”总图，并写 3 个 2024/2026 真题落点。"),
+  72: focusSpec(5,
+    "免疫与细胞类型在 2023—2026 反复出现；2026 命中 PRR、胸腺选择、PD-1、类器官等。",
+    "两条防线、MHC、T/B 细胞谱系、抗体、超敏、HIV、NK、PD-1 与组织细胞类型。",
+    "PAMP/抗原 → 抗原呈递 → 克隆选择/扩增 → 效应与记忆 → 清除或免疫病理。",
+    "MBoC 7e · Ch. 23 Pathogens and Infection; Ch. 24 The Innate and Adaptive Immune Systems",
+    "PRR · PAMP · MHC · positive/negative selection · antibody · PD-1 · memory",
+    "所有细胞因子和补体片段的完整清单。",
+    "用一张免疫总图覆盖先天、适应性、抗体和免疫治疗，标出 5 个近年真题词。"),
+  73: focusSpec(5,
+    "模拟考试把时间分配与答题结构放在知识之上；目标是稳定拿住主干分。",
+    "选择 40 分钟、简答每题 8—10 分钟、论述每题 20—25 分钟，预留检查。",
+    "先做稳的题 → 标记不确定题 → 简答写得分节点 → 论述按四段结构 → 回查题干。",
+    "MBoC 7e · 全部核心章节",
+    "time allocation · scoring point · answer structure · self-check",
+    "在单题上死磕、最后没有时间回头。",
+    "严格按时间完成模拟；交卷后只统计失分类型，不立即看答案。"),
+  74: focusSpec(5,
+    "第二次模拟的重点是修正第一次的时间与结构问题，而不是扩大知识面。",
+    "复盘选择题误判、简答漏点、论述跑题；保留能稳定复现的得分模板。",
+    "审题 → 标动词 → 列节点 → 写主干 → 例子 → 结论。",
+    "MBoC 7e · 全部核心章节",
+    "misread · missing point · time overrun · structure",
+    "重新看已经会的内容，或用偏难怪题制造焦虑。",
+    "只复盘错题与超时题；每道题写一个“下次先写什么”的动作。"),
+  75: REST_FOCUS,
+  76: focusSpec(5,
+    "第三次模拟用于验证稳定性：高频机制是否能在压力下自动输出。",
+    "最后一次全真计时，重点观察检查点、信号方向、分选顺序和免疫选择是否掉链。",
+    "读题 → 定位章节 → 画最小机制链 → 按题目要求作答。",
+    "MBoC 7e · 全部核心章节",
+    "automatic retrieval · mechanism chain · exam timing",
+    "新开专题、改变答题模板。",
+    "模拟后只做“错因标签”，不新增资料；把最高频的 3 个漏洞留到查漏日。"),
+  77: focusSpec(5,
+    "考前查漏一优先处理跨年重复的机制链，而不是从头再背教材。",
+    "膜运输、蛋白质分选、信号、周期、凋亡、免疫六条主线的断点。",
+    "每条主线只看起点、关键中间体、终点和关闭点；能否合上书复述。",
+    "MBoC 7e · Ch. 10—24 高频框架",
+    "mechanism chain · regulation · exception · exam clue",
+    "没有真题证据支撑的边角资料。",
+    "列出六条主线各自的 1 个断点，并在 30 分钟内补齐。"),
+  78: focusSpec(5,
+    "考前查漏二专攻易混对照：被动/主动、三种骨架、核酶、光反应/暗反应、先天/适应。",
+    "用对比表消灭方向、极性、时间和能量来源错误。",
+    "概念 A vs B → 判据 1—4 → 一个反例 → 一道真题句子。",
+    "MBoC 7e · Ch. 11, 14, 16, 24",
+    "contrast · direction · polarity · energy source · time course",
+    "大段重新阅读；只保留会让自己失分的差异。",
+    "每类做 4 行对照表，遮住右栏自测；错一次就在左栏加粗。"),
+  79: focusSpec(5,
+    "考前查漏三把知识压缩成可直接落笔的三段式，优先保证论述不跑题。",
+    "基础概念 → 分子机制 → 案例/前沿评价；每段都要回应题干。",
+    "定义对象 → 说明怎么发生 → 写结果与证据 → 回到题目问题。",
+    "MBoC 7e · 全部核心章节",
+    "definition · mechanism · evidence · evaluation",
+    "新增理论、扩充参考文献、与他人比较进度。",
+    "任取 2 道论述题，各写 6 分钟三段式提纲，检查首句是否直接答题。"),
+  80: focusSpec(4,
+    "最后一天只做高频压缩与状态管理；不再用新知识改变既有答题框架。",
+    "高频一句话、六条机制链、易混对照和论述模板。",
+    "看到题干先识别“结构/运输/信号/周期/免疫”，再调用固定链条。",
+    "MBoC 7e · 全部核心章节",
+    "recall · mechanism · structure",
+    "任何未验证的新资料、偏难怪题和熬夜。",
+    "只复述高频清单 20 分钟，然后停止学习，保证睡眠和考试状态。")
+};
+
+function episodicReviewFocus(title){
+  const topics = String(title || "").split("艾宾浩斯复习 · ").pop().split("、").filter(Boolean);
+  return focusSpec(5,
+    "艾宾浩斯间隔复习日：先回炉 2023—2026 的高频机制，不重新铺开整章细节。",
+    "回炉今日复习清单：" + topics.join("、") + "；只补仍然卡住的节点。",
+    "遮住原页口头复述 → 画出机制链 → 对照英文关键词 → 只重做错题。",
+    "MBoC 7e · 对应前述章节",
+    "spaced retrieval · mechanism chain · English terminology",
+    "已经连续两次答对、且不属于真题主线的细节。",
+    "15 分钟完成三件事：每个主题口述 1 条链、各写 2 个英文术语、重做 1 道错题。");
+}
+
+function focusProfileForTitle(title){
+  const t = String(title || "");
+  if(!t) return null;
+  if(/休息日/.test(t)) return REST_FOCUS;
+  if(/艾宾浩斯复习/.test(t)) return episodicReviewFocus(t);
+  if(/细胞信号转导（下）/.test(t)) return FOCUS_BY_DAY[21];
+  if(/细胞信号转导（上）|· 细胞信号转导$/.test(t)) return FOCUS_BY_DAY[20];
+  if(/物质的跨膜运输（上）/.test(t)) return FOCUS_BY_DAY[7];
+  if(/物质的跨膜运输（下）/.test(t)) return FOCUS_BY_DAY[8];
+  if(/物质的跨膜运输/.test(t)) return FOCUS_BY_DAY[7];
+  if(/细胞骨架（上）/.test(t)) return FOCUS_BY_DAY[15];
+  if(/细胞骨架（下）/.test(t)) return FOCUS_BY_DAY[16];
+  if(/细胞骨架/.test(t)) return FOCUS_BY_DAY[15];
+  if(/线粒体与叶绿体（上）/.test(t)) return FOCUS_BY_DAY[13];
+  if(/线粒体与叶绿体（下）/.test(t)) return FOCUS_BY_DAY[14];
+  if(/线粒体与叶绿体/.test(t)) return FOCUS_BY_DAY[13];
+  if(/绪论（上）/.test(t)) return FOCUS_BY_DAY[1];
+  if(/绪论（下）/.test(t)) return FOCUS_BY_DAY[2];
+  if(/· 绪论$/.test(t)) return FOCUS_BY_DAY[1];
+  if(/细胞生物学研究方法（上）/.test(t)) return FOCUS_BY_DAY[3];
+  if(/细胞生物学研究方法（下）/.test(t)) return FOCUS_BY_DAY[4];
+  if(/细胞生物学研究方法/.test(t)) return FOCUS_BY_DAY[3];
+  if(/细胞增殖调控与癌细胞/.test(t)) return FOCUS_BY_DAY[24];
+  if(/细胞周期与细胞分裂/.test(t)) return FOCUS_BY_DAY[22];
+  if(/细胞死亡与细胞衰老/.test(t)) return FOCUS_BY_DAY[27];
+  if(/细胞分化与干细胞/.test(t)) return FOCUS_BY_DAY[25];
+  if(/细胞质膜/.test(t)) return FOCUS_BY_DAY[6];
+  if(/细胞质基质与内膜系统/.test(t)) return FOCUS_BY_DAY[9];
+  if(/蛋白质分选|膜泡运输/.test(t)) return FOCUS_BY_DAY[10];
+  if(/细胞核与染色质|冲刺（四）：细胞核/.test(t)) return /冲刺/.test(t) ? FOCUS_BY_DAY[67] : FOCUS_BY_DAY[17];
+  if(/核糖体/.test(t)) return FOCUS_BY_DAY[18];
+  if(/细胞的社会联系/.test(t)) return FOCUS_BY_DAY[28];
+  if(/各类主要细胞类型/.test(t)) return FOCUS_BY_DAY[30];
+  if(/免疫（上）：两条防线/.test(t)) return FOCUS_BY_DAY[31];
+  if(/免疫细胞谱系/.test(t)) return FOCUS_BY_DAY[32];
+  if(/超敏四型/.test(t)) return FOCUS_BY_DAY[34];
+  if(/HIV/.test(t)) return FOCUS_BY_DAY[36];
+  if(/肿瘤靶向治疗与耐药/.test(t)) return FOCUS_BY_DAY[38];
+  if(/肿瘤细胞基础/.test(t)) return FOCUS_BY_DAY[37];
+  if(/干细胞与类器官/.test(t)) return FOCUS_BY_DAY[39];
+  if(/先进技术（一）/.test(t)) return FOCUS_BY_DAY[41];
+  if(/先进技术（二）/.test(t)) return FOCUS_BY_DAY[42];
+  if(/发育（一）/.test(t)) return FOCUS_BY_DAY[43];
+  if(/发育（二）/.test(t)) return FOCUS_BY_DAY[44];
+  if(/信号通路升级/.test(t)) return FOCUS_BY_DAY[45];
+  if(/光合作用与叶绿体/.test(t)) return FOCUS_BY_DAY[48];
+  if(/分子层面交叉考点（一）/.test(t)) return FOCUS_BY_DAY[49];
+  if(/分子层面交叉考点（二）/.test(t)) return FOCUS_BY_DAY[50];
+  if(/选择题专项（一）/.test(t)) return FOCUS_BY_DAY[51];
+  if(/选择题专项（二）/.test(t)) return FOCUS_BY_DAY[52];
+  if(/22—23 年名词解释/.test(t)) return FOCUS_BY_DAY[53];
+  if(/22—23 年简答/.test(t)) return FOCUS_BY_DAY[55];
+  if(/2024 单选（前半）/.test(t)) return FOCUS_BY_DAY[56];
+  if(/2024 单选（后半）/.test(t)) return FOCUS_BY_DAY[57];
+  if(/2024 简答/.test(t)) return FOCUS_BY_DAY[59];
+  if(/2024 论述/.test(t)) return FOCUS_BY_DAY[60];
+  if(/2025 选择题与解答题/.test(t)) return FOCUS_BY_DAY[62];
+  if(/2025 大题/.test(t)) return FOCUS_BY_DAY[63];
+  if(/冲刺（一）/.test(t)) return FOCUS_BY_DAY[64];
+  if(/冲刺（二）/.test(t)) return FOCUS_BY_DAY[65];
+  if(/冲刺（三）/.test(t)) return FOCUS_BY_DAY[66];
+  if(/冲刺（四）：细胞核/.test(t)) return FOCUS_BY_DAY[67];
+  if(/冲刺（五）：信号转导与肿瘤/.test(t)) return FOCUS_BY_DAY[69];
+  if(/冲刺（六）/.test(t)) return FOCUS_BY_DAY[71];
+  if(/冲刺（七）/.test(t)) return FOCUS_BY_DAY[72];
+  if(/机动复习：回炉错题/.test(t)) return FOCUS_BY_DAY[11];
+  if(/机动复习：默写高频名词/.test(t)) return FOCUS_BY_DAY[23];
+  if(/机动复习：画通路流程图/.test(t)) return FOCUS_BY_DAY[35];
+  if(/机动复习：背诵主线/.test(t)) return FOCUS_BY_DAY[46];
+  if(/机动复习：限时默写/.test(t)) return FOCUS_BY_DAY[58];
+  if(/机动复习：整卷回顾/.test(t)) return FOCUS_BY_DAY[70];
+  if(/模拟考试/.test(t)) return FOCUS_BY_DAY[73];
+  if(/考前查漏（一）/.test(t)) return FOCUS_BY_DAY[77];
+  if(/考前查漏（二）/.test(t)) return FOCUS_BY_DAY[78];
+  if(/考前查漏（三）/.test(t)) return FOCUS_BY_DAY[79];
+  if(/考前调整/.test(t)) return FOCUS_BY_DAY[80];
+  return null;
+}
+
+function dayFocusFor(d){
+  if(!d || d.special) return null;
+  return focusProfileForTitle(d.title) || FOCUS_BY_DAY[d.n] || FOCUS_BY_DAY[80];
+}
+
+function focusTier(stars){
+  if(stars >= 5) return "跨年高频 · 必须拿下";
+  if(stars >= 4) return "近期常考 · 优先掌握";
+  if(stars >= 3) return "教材主干 · 保证理解";
+  return "低权重 · 本轮可后置";
+}
+
+function focusCardHtml(d){
+  const f = dayFocusFor(d);
+  if(!f) return "";
+  if(f.rest){
+    return `<section class="focus-card rest" aria-label="今日复习侧重">
+      <div class="focus-head">
+        <div><div class="focus-kicker">今日侧重</div><div class="focus-rating"><span class="focus-tier" style="color:var(--ok)">休息日 · 恢复优先</span></div></div>
+      </div>
+      <div class="focus-rest-body"><b>${esc(f.core)}</b><br>${esc(f.output)}</div>
+    </section>`;
+  }
+  const stars = "★".repeat(f.stars) + "☆".repeat(Math.max(0, 5 - f.stars));
+  return `<section class="focus-card" aria-label="今日复习侧重">
+    <div class="focus-head">
+      <div>
+        <div class="focus-kicker">今日侧重 · 先看这里</div>
+        <div class="focus-rating"><span class="focus-stars" aria-label="重要度 ${f.stars} 星">${stars}</span><span class="focus-tier">${esc(focusTier(f.stars))}</span></div>
+      </div>
+      <div class="focus-book"><b>英文教材定位</b><br>${esc(f.book)}</div>
+    </div>
+    <div class="focus-grid">
+      <div class="focus-item wide"><span class="label">真题证据与权重</span><span class="value">${esc(f.evidence)}</span></div>
+      <div class="focus-item"><span class="label">今天必须先拿下</span><span class="value">${esc(f.core)}</span></div>
+      <div class="focus-item"><span class="label">闭卷要画出的机制链</span><span class="value">${esc(f.chain)}</span></div>
+      <div class="focus-item"><span class="label">英文教材关键词</span><span class="value mono">${esc(f.terms)}</span></div>
+      <div class="focus-item"><span class="label">本轮可以暂缓</span><span class="value">${esc(f.defer)}</span></div>
+      <div class="focus-item wide"><span class="label">10 分钟输出 / 自测</span><span class="value">${esc(f.output)}</span></div>
+    </div>
+    <div class="focus-rule">排序原则：真题连续出现与跨年重复优先，其次才是教材细节覆盖。英文教材用于补机制框架、术语和主次边界，不要求逐段翻译。</div>
+  </section>`;
+}
+
 const $side = document.getElementById("side");
 const $main = document.getElementById("main");
 
@@ -781,7 +1525,9 @@ function daySearchText(d){
   const mindmapText = mindmapItems.length
     ? ["章节思维导图", "知识框架"].concat(mindmapItems.map(x => x.topic + " " + x.label)).join(" ")
     : "";
-  return [d.title].concat((d.sections || []).map(s => flatText(s.blocks)), courseText, immunoText, mindmapText).join(" ");
+  const f = dayFocusFor(d);
+  const focusText = f ? [f.evidence, f.core, f.chain, f.book, f.terms, f.defer, f.output].filter(Boolean).join(" ") : "";
+  return [d.title].concat((d.sections || []).map(s => flatText(s.blocks)), courseText, immunoText, mindmapText, focusText).join(" ");
 }
 function dayLabel(d){
   return d.special ? d.title : "Day " + d.n + " · " + d.title;
@@ -1273,9 +2019,10 @@ function renderMindMapIndex(){
   if(sideIsOpen) closeSide();
 }
 
-function sectionHtml(s, si, n, answerHtml, isTopic){
+function sectionHtml(s, si, n, answerHtml, isTopic, day){
   const k = s.key;
-  const title = s.title;
+  const focus = (!isTopic && k === "must") ? dayFocusFor(day) : null;
+  const title = (focus && !focus.rest) ? "今日必须背诵 " + "★".repeat(focus.stars) : s.title;
   if(k === "fold"){
     return `<details class="supp-fold"${s.open ? " open" : ""}>
       <summary><span>${esc(title)}</span>${s.note ? `<small>${esc(s.note)}</small>` : ""}</summary>
@@ -1406,6 +2153,7 @@ function renderDayView(d){
     ${hasRecall?`<button class="btn ${recallMode?'active':''}" data-act="recall-mode">背诵模式</button>`:''}
     ${recallMode?`<button class="btn ghost" data-act="reveal-all">全部显示</button><button class="btn ghost" data-act="hide-all">全部隐藏</button>`:''}
   </div>`;
+  h += focusCardHtml(d);
   const guideCode = isTopic ? null : topicForDay(d);
   const guideTopic = guideCode ? topics.find(x => x.n === guideCode) : null;
   if(guideTopic){
@@ -1415,7 +2163,7 @@ function renderDayView(d){
     </div>`;
   }
   const answerHtml = d.sections.filter(s=>s.key==="must"||s.key==="extra").map(s=>richBlocksHtml(s.blocks)).join("");
-  h += d.sections.map((s, si) => sectionHtml(s, si, d.n, answerHtml, isTopic)).join("");
+  h += d.sections.map((s, si) => sectionHtml(s, si, d.n, answerHtml, isTopic, d)).join("");
   h += `</div>`;
   $main.innerHTML = h;
   if(sideIsOpen) closeSide();
