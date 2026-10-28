@@ -1146,8 +1146,9 @@ function sectionHtml(s, si, n, answerHtml, isTopic){
       </div>
     </section>`;
   }
+  const mindmapHtml = k === "frame" ? mindmapSectionHtml(n) : "";
   const courseHtml = k === "frame" ? courseCardHtml(n, isTopic) : "";
-  return `<section class="sec"><h3 class="sec-title">${esc(title)}</h3>${richBlocksHtml(s.blocks)}${courseHtml}</section>`;
+  return `<section class="sec"><h3 class="sec-title">${esc(title)}</h3>${richBlocksHtml(s.blocks)}${mindmapHtml}${courseHtml}</section>`;
 }
 
 const revealedSet = new Set();
@@ -1243,7 +1244,6 @@ function renderDayView(d){
       <button class="btn" data-act="go-topic-n" data-t="${esc(guideCode)}">打开 ${esc(guideCode)} 原理专题</button>
     </div>`;
   }
-  h += mindmapSectionHtml(d.n);
   const answerHtml = d.sections.filter(s=>s.key==="must"||s.key==="extra").map(s=>richBlocksHtml(s.blocks)).join("");
   h += d.sections.map((s, si) => sectionHtml(s, si, d.n, answerHtml, isTopic)).join("");
   h += `</div>`;
